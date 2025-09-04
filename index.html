@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Остров — кликабельные зоны (редактор 2.0)</title>
+<title>Остров — круговые зоны (правки координат, без подсветки)</title>
 
 <!-- Карта и версии с индикаторами -->
 <link rel="preload" as="image" href="1.jpg">
@@ -29,22 +29,22 @@
   .btn{appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff}
 
   .mapWrap{position:relative}
-  .editing .mapWrap{touch-action:none} /* чтобы страница не скроллилась при перетаскивании на мобильных */
+  .editing .mapWrap{touch-action:none} /* без скролла при перетаскивании на мобилках */
   .map{display:block;width:100%;height:auto}
 
-  /* Зоны */
+  /* Зоны — без подсветки вообще */
   .hotspot{cursor:pointer;pointer-events:all;fill:rgba(255,165,0,0)}
-  /* В режиме редактирования сама зона НЕ ловит события — только ручки и контур */
-  .editing .hotspot{pointer-events:none;fill:rgba(255,165,0,.10)}
+  .editing .hotspot{pointer-events:none} /* в редактировании клики по зоне отключены */
 
-  .zone-outline{display:none;stroke:var(--accent);stroke-width:2;stroke-dasharray:6 6;fill:none;pointer-events:stroke;cursor:pointer}
+  .zone-outline{display:none;stroke:var(--accent);stroke-width:2;stroke-dasharray:6 6;fill:none;pointer-events:stroke;cursor:grab}
   .editing .zone-outline{display:block}
+  .zone-outline:active{cursor:grabbing}
 
   .move-handle,.radius-handle{display:none;stroke:var(--accent);stroke-width:2}
   .editing .move-handle,.editing .radius-handle{display:block}
   .move-handle{fill:#fff;cursor:grab}
   .move-handle:active{cursor:grabbing}
-  .radius-handle{fill:#fff;cursor:nesw-resize}
+  .radius-handle{fill:#fff;cursor:ew-resize} /* тянем радиус вправо */
 
   .zone-label{display:none;font:700 12px/1 sans-serif;fill:#111}
   .editing .zone-label{display:block}
@@ -71,11 +71,11 @@
       <label><input type="checkbox" id="editToggle"> Режим настройки</label>
       <label><input type="checkbox" id="snapToggle"> Привязка к сетке</label>
       <label>Шаг: <input type="number" id="snapStep" value="8" min="1" style="width:70px"></label>
-      <span class="muted right">Подсказка: тяните <span class="kbd">●</span> — двигаем, <span class="kbd">■</span> — радиус; стрелки — точная подгонка (Shift=×10)</span>
+      <span class="muted right">Тяните <span class="kbd">●</span> — двигаем, <span class="kbd">■</span> — радиус; стрелки — точная подгонка</span>
     </div>
 
     <div class="mapWrap">
-      <!-- Если 1.jpg другого размера — замените размеры viewBox -->
+      <!-- Если 1.jpg другого размера — поменяйте viewBox -->
       <svg id="svg" class="map" viewBox="0 0 768 1152" preserveAspectRatio="xMidYMid meet">
         <image id="mapImg" href="1.jpg" width="768" height="1152"/>
         <g id="zonesLayer"></g>
@@ -111,7 +111,7 @@
       <div><label>Y (cy)</label><input type="number" id="cy"></div>
     </div>
     <div class="field inline">
-      <div><label>Радиус (r)</label><input type="number" id="r" min="20" max="220"></div>
+      <div><label>Радиус (r)</label><input type="number" id="r" min="20" max="400"></div>
       <div><label>Картинка</label>
         <select id="imageSel">
           <option>1.jpg</option><option>2.jpg</option><option>3.jpg</option><option>4.jpg</option>
@@ -133,7 +133,6 @@
       <input type="text" id="link" placeholder="https://...">
       <label class="small"><input type="checkbox" id="newtab"> Открывать в новой вкладке</label>
     </div>
-
     <div class="field" id="msgBox" style="display:none">
       <label>Сообщение</label>
       <textarea id="message" placeholder="Текст модалки"></textarea>
@@ -168,17 +167,36 @@
 </div>
 
 <script>
-/* --- ИСХОДНЫЕ ЗОНЫ --- */
+/* --- СЛУЧАЙНЫЕ СООБЩЕНИЯ ДЛЯ ЛАГЕРЕЙ --- */
+const MSG_RED = [
+  '🔥 Лагерь Красных на связи! Собираемся и жжём сегодняшние шаги.',
+  'Пламя разгорелось — пора в Бухту тренировок.',
+  'Наш девиз: «Мало слов — больше шагов». В бой!',
+  'Горячий квест дня: 10 минут темповой ходьбы + вода. Сделано?',
+  'Топим прокрастинацию: 3…2…1 — пошли!',
+  'Сегодня охота за очками: берём лидерство?'
+];
+const MSG_YELLOW = [
+  '🌞 Лагерь Жёлтых светит ярче! Включаем энергию и шагаем.',
+  'Солнышко зовёт: «+1000 шагов до обеда». Успеем?',
+  'Наш девиз: «Легко, светло, результатно». Поехали!',
+  'День лёгкости: 15 минут шагов + растяжка.',
+  'Улыбка + музыка = быстрые калории. Вперёд!',
+  'Держим лидерство! Оставим Красных позади?'
+];
+function randomFrom(arr){ return arr[Math.floor(Math.random()*arr.length)] }
+
+/* --- ИСХОДНЫЕ ЗОНЫ (круги) с твоими координатами --- */
 let zones = [
-  {id:'food_cliff',   name:'Скала пропитания', cx:384, cy:160, r:90,  type:'link',    link:'#', image:'8.jpg', newtab:false},
-  {id:'luck_plateau', name:'Плато азарта',     cx:600, cy:420, r:90,  type:'link',    link:'#', image:'7.jpg', newtab:false},
-  {id:'workout_bay',  name:'Бухта тренировок', cx:165, cy:450, r:92,  type:'link',    link:'#', image:'5.jpg', newtab:false},
-  {id:'arrival',      name:'Зона прибытия',    cx:160, cy:940, r:95,  type:'link',    link:'#', image:'2.jpg', newtab:false},
-  {id:'mind_mouth',   name:'Устье разума',     cx:390, cy:420, r:78,  type:'link',    link:'#', image:'6.jpg', newtab:false},
-  {id:'tribe_council',name:'Совет племени',    cx:385, cy:610, r:90,  type:'link',    link:'#', image:'4.jpg', newtab:false},
-  {id:'inspire_forest',name:'Лес вдохновения', cx:650, cy:690, r:95,  type:'link',    link:'#', image:'3.jpg', newtab:false},
-  {id:'camp_red',     name:'Лагерь красных',   cx:215, cy:790, r:95,  type:'message', message:'Тут будет сообщение для ЛАГЕРЯ КРАСНЫХ.', image:'1.jpg'},
-  {id:'camp_yellow',  name:'Лагерь жёлтых',    cx:640, cy:900, r:95,  type:'message', message:'Тут будет сообщение для ЛАГЕРЯ ЖЁЛТЫХ.',  image:'1.jpg'}
+  {id:'food_cliff',   name:'Скала пропитания', cx:384, cy:160, r:137, type:'link',    link:'#', image:'8.jpg', newtab:false},
+  {id:'luck_plateau', name:'Плато азарта',     cx:621, cy:373, r:146, type:'link',    link:'#', image:'7.jpg', newtab:false},
+  {id:'mind_mouth',   name:'Устье разума',     cx:423, cy:369, r: 68, type:'link',    link:'#', image:'6.jpg', newtab:false},
+  {id:'workout_bay',  name:'Бухта тренировок', cx:151, cy:491, r:112, type:'link',    link:'#', image:'5.jpg', newtab:false},
+  {id:'tribe_council',name:'Совет племени',    cx:384, cy:588, r: 98, type:'link',    link:'#', image:'4.jpg', newtab:false},
+  {id:'inspire_forest',name:'Лес вдохновения', cx:625, cy:629, r:117, type:'link',    link:'#', image:'3.jpg', newtab:false},
+  {id:'camp_yellow',  name:'Лагерь жёлтых',    cx:640, cy:900, r: 95, type:'message', message:'', image:'1.jpg'},
+  {id:'camp_red',     name:'Лагерь красных',   cx:187, cy:694, r: 95, type:'message', message:'', image:'1.jpg'},
+  {id:'arrival',      name:'Зона прибытия',    cx:165, cy:835, r: 69, type:'link',    link:'#', image:'2.jpg', newtab:false}
 ];
 
 /* --- ПРЕДЗАГРУЗКА --- */
@@ -226,28 +244,28 @@ let editing=false, busy=false;
 function render(){
   layer.innerHTML='';
   zones.forEach(z=>{
-    // контур
+    // контур круга
     const outline = document.createElementNS('http://www.w3.org/2000/svg','circle');
     outline.setAttribute('class','zone-outline');
     outline.dataset.id=z.id;
     outline.setAttribute('cx',z.cx); outline.setAttribute('cy',z.cy); outline.setAttribute('r',z.r);
     layer.appendChild(outline);
 
-    // кликабельная зона (для обычного режима)
+    // кликабельная зона (обычный режим)
     const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
     c.setAttribute('class','hotspot');
     c.dataset.id=z.id;
     c.setAttribute('cx',z.cx); c.setAttribute('cy',z.cy); c.setAttribute('r',z.r);
     layer.appendChild(c);
 
-    // центр-ручка (движение)
+    // центр-ручка (●)
     const move = document.createElementNS('http://www.w3.org/2000/svg','circle');
     move.setAttribute('class','move-handle');
     move.dataset.id=z.id;
     move.setAttribute('cx',z.cx); move.setAttribute('cy',z.cy); move.setAttribute('r',10);
     layer.appendChild(move);
 
-    // ручка радиуса (квадрат)
+    // ручка радиуса (■) — справа
     const rh = document.createElementNS('http://www.w3.org/2000/svg','rect');
     rh.setAttribute('class','radius-handle');
     rh.dataset.id=z.id;
@@ -283,7 +301,7 @@ function refreshForm(){
 function setEditing(v){ editing=v; svg.classList.toggle('editing',editing); }
 editToggle.addEventListener('change',e=>setEditing(e.target.checked));
 
-/* --- Навигация/клики в обычном режиме --- */
+/* --- Клики в обычном режиме --- */
 layer.addEventListener('click', (e)=>{
   if(editing) return;
   const id=e.target.dataset.id; if(!id) return;
@@ -291,83 +309,95 @@ layer.addEventListener('click', (e)=>{
   busy=true; mapImg.setAttribute('href', z.image||'1.jpg');
 
   if(z.type==='message'){
-    setTimeout(()=>{ modalText.textContent=z.message||'Сообщение'; modal.style.display='grid'; }, 250);
+    // случайные тексты для лагерей
+    if(z.id==='camp_red')    z.message = randomFrom(MSG_RED);
+    if(z.id==='camp_yellow') z.message = randomFrom(MSG_YELLOW);
+    setTimeout(()=>{ modalText.textContent=z.message||'Сообщение'; modal.style.display='grid'; }, 200);
     return;
   }
   if(z.link && z.link!=='#'){
-    setTimeout(()=>{ z.newtab?window.open(z.link,'_blank'):window.location.assign(z.link); }, 700);
+    setTimeout(()=>{ z.newtab?window.open(z.link,'_blank'):window.location.assign(z.link); }, 650);
   }else{
     setTimeout(()=>{ mapImg.setAttribute('href','1.jpg'); busy=false; }, 900);
   }
 });
 
-/* --- Выбор, перетаскивание и ресайз (только ручки/контур) --- */
+/* --- Вспомогательные --- */
 function svgPoint(evt){
   const pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
   return pt.matrixTransform(svg.getScreenCTM().inverse());
 }
-let drag=null, resize=null, startP=null, startZ=null;
+function applySnap(val){ if(!snapToggle.checked) return val; const s=Math.max(1,Number(snapStep.value||8)); return Math.round(val/s)*s; }
+
+function redraw(z){
+  const o = layer.querySelector(`.zone-outline[data-id="${z.id}"]`);
+  const c = layer.querySelector(`.hotspot[data-id="${z.id}"]`);
+  const mh= layer.querySelector(`.move-handle[data-id="${z.id}"]`);
+  const rh= layer.querySelector(`.radius-handle[data-id="${z.id}"]`);
+  const lb= layer.querySelector(`.zone-label[data-id="${z.id}"]`);
+  [o,c].forEach(el=>{
+    el.setAttribute('cx',z.cx); el.setAttribute('cy',z.cy); el.setAttribute('r',z.r);
+  });
+  mh.setAttribute('cx', z.cx); mh.setAttribute('cy', z.cy);
+  rh.setAttribute('x', z.cx + z.r - 7); rh.setAttribute('y', z.cy - 7);
+  lb.setAttribute('x', z.cx); lb.setAttribute('y', z.cy - z.r - 10); lb.textContent=z.name;
+}
+
+/* --- Перетаскивание/ресайз — только ручки/контур --- */
+let drag=null, resize=null, startP=null, startZ=null, activePointerId=null;
+
+function startDrag(e,id,mode){
+  selected=id; refreshForm();
+  startP=svgPoint(e); startZ={...zones.find(z=>z.id===id)};
+  if(mode==='move')  drag={id};
+  if(mode==='size')  resize={id};
+  activePointerId=e.pointerId;
+  try{ svg.setPointerCapture(activePointerId); }catch{}
+}
+function endDrag(){
+  drag=resize=startP=startZ=null;
+  activePointerId=null;
+  jsonArea.value=JSON.stringify(zones,null,2);
+  refreshForm();
+}
 
 layer.addEventListener('pointerdown',e=>{
   if(!editing) return;
-  const t=e.target;
-  const id=t.dataset.id;
-  if(!id) return;
-
-  selected=id; refreshForm();
+  const t=e.target; const id=t.dataset.id; if(!id) return;
 
   if(t.classList.contains('move-handle') || t.classList.contains('zone-outline')){
-    startP=svgPoint(e); startZ={...zones.find(z=>z.id===id)};
-    drag={id}; svg.setPointerCapture(e.pointerId);
+    startDrag(e,id,'move');
   }
   if(t.classList.contains('radius-handle')){
-    startP=svgPoint(e); startZ={...zones.find(z=>z.id===id)};
-    resize={id}; svg.setPointerCapture(e.pointerId);
+    startDrag(e,id,'size');
   }
 });
-
 layer.addEventListener('pointermove',e=>{
   if(!(drag||resize)) return;
   const p=svgPoint(e);
-  const z=zones.find(q=>q.id===((drag||resize).id));
-  if(!z) return;
+  const z=zones.find(q=>q.id===((drag||resize).id)); if(!z) return;
 
   if(drag){
     const dx=p.x-startP.x, dy=p.y-startP.y;
-    z.cx=startZ.cx+dx; z.cy=startZ.cy+dy;
-    if(snapToggle.checked){ const s=Math.max(1,Number(snapStep.value||8)); z.cx=Math.round(z.cx/s)*s; z.cy=Math.round(z.cy/s)*s; }
+    z.cx = applySnap(startZ.cx + dx);
+    z.cy = applySnap(startZ.cy + dy);
   }
   if(resize){
-    const dx=p.x-startZ.cx, dy=p.y-startZ.cy;
-    z.r=Math.max(20,Math.min(220, Math.hypot(dx,dy)));
-    if(snapToggle.checked){ const s=Math.max(1,Number(snapStep.value||8)); z.r=Math.round(z.r/s)*s; }
+    const dx=p.x-startZ.cx;
+    z.r = Math.max(20, Math.min(400, applySnap(Math.abs(dx))));
   }
   redraw(z);
 });
-
 layer.addEventListener('pointerup',e=>{
-  if(drag||resize){ svg.releasePointerCapture(e.pointerId); drag=resize=startP=startZ=null; jsonArea.value=JSON.stringify(zones,null,2); refreshForm(); }
+  if(activePointerId!==null){ try{ svg.releasePointerCapture(activePointerId); }catch{} }
+  endDrag();
 });
+layer.addEventListener('lostpointercapture', endDrag);
+layer.addEventListener('pointercancel', endDrag);
+window.addEventListener('mouseup', ()=>{ if(drag||resize) endDrag(); });
+window.addEventListener('touchend', ()=>{ if(drag||resize) endDrag(); });
 
-function redraw(z){
-  // контур
-  const outline=[...layer.querySelectorAll('.zone-outline')][zones.findIndex(q=>q.id===z.id)];
-  outline.setAttribute('cx',z.cx); outline.setAttribute('cy',z.cy); outline.setAttribute('r',z.r);
-  // зона
-  const c=layer.querySelector(`.hotspot[data-id="${z.id}"]`);
-  c.setAttribute('cx',z.cx); c.setAttribute('cy',z.cy); c.setAttribute('r',z.r);
-  // move-handle
-  const mh=layer.querySelector(`.move-handle[data-id="${z.id}"]`);
-  mh.setAttribute('cx',z.cx); mh.setAttribute('cy',z.cy);
-  // radius-handle
-  const rh=layer.querySelector(`.radius-handle[data-id="${z.id}"]`);
-  rh.setAttribute('x', z.cx+z.r-7); rh.setAttribute('y', z.cy-7);
-  // подпись
-  const lab=layer.querySelector(`.zone-label[data-id="${z.id}"]`);
-  lab.setAttribute('x',z.cx); lab.setAttribute('y',z.cy-z.r-10); lab.textContent=z.name;
-}
-
-/* --- Тонкая подгонка стрелками --- */
+/* --- Точная подгонка стрелками --- */
 document.addEventListener('keydown',e=>{
   if(!editing) return;
   const z=zones.find(q=>q.id===selected); if(!z) return;
@@ -378,15 +408,12 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowUp')    z.cy-=step;
   if(e.key==='ArrowDown')  z.cy+=step;
   if(e.key==='-')          z.r=Math.max(20, z.r-1);
-  if(e.key==='=')          z.r=Math.min(220, z.r+1);
-  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','-','='].includes(e.key)){
-    if(snapToggle.checked){ const s=Math.max(1,Number(snapStep.value||8)); z.cx=Math.round(z.cx/s)*s; z.cy=Math.round(z.cy/s)*s; }
-    redraw(z); refreshForm(); jsonArea.value=JSON.stringify(zones,null,2);
-  }
+  if(e.key==='=')          z.r=Math.min(400, z.r+1);
+  redraw(z); refreshForm(); jsonArea.value=JSON.stringify(zones,null,2);
 });
 
-/* --- ФОРМА --- */
-function apply(){
+/* --- Форма --- */
+function applyForm(){
   const z=zones.find(q=>q.id===selected); if(!z) return;
   z.name=nameSel.value;
   z.cx=Number(cxIn.value||z.cx);
@@ -399,9 +426,8 @@ function apply(){
   z.message=messageIn.value.trim();
   redraw(z); refreshForm(); jsonArea.value=JSON.stringify(zones,null,2);
 }
-applyBtn.addEventListener('click',apply);
-[actionSel].forEach(el=>el.addEventListener('change',refreshForm));
-[nameSel,cxIn,cyIn,rIn,imageSel,linkIn,newtab,messageIn].forEach(el=>el.addEventListener('change',apply));
+applyBtn.addEventListener('click',applyForm);
+[nameSel,cxIn,cyIn,rIn,imageSel,actionSel,linkIn,newtab,messageIn].forEach(el=>el.addEventListener('change',applyForm));
 
 /* --- Добавить/Удалить --- */
 addBtn.addEventListener('click',()=>{
