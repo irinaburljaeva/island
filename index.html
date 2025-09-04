@@ -3,9 +3,9 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Остров — кликабельные зоны + настройка</title>
+<title>Остров — кликабельные зоны (редактор 2.0)</title>
 
-<!-- Базовая карта и версии с подсветкой -->
+<!-- Карта и версии с индикаторами -->
 <link rel="preload" as="image" href="1.jpg">
 <link rel="preload" as="image" href="2.jpg">
 <link rel="preload" as="image" href="3.jpg">
@@ -16,56 +16,50 @@
 <link rel="preload" as="image" href="8.jpg">
 
 <style>
-  :root { --accent:#0ea5e9; --bg:#0e2230; }
+  :root{--accent:#0ea5e9;--bg:#0e2230}
   *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:#0f172a}
+  body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg)}
   .page{max-width:1100px;margin:0 auto;padding:16px;display:grid;gap:16px}
-  @media (min-width:980px){.page{grid-template-columns:1fr 360px}}
-
+  @media(min-width:980px){.page{grid-template-columns:1fr 360px}}
   .card{background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.15);overflow:hidden}
-  .mapWrap{position:relative}
-  .map{display:block;width:100%;height:auto}
-  .toolbar{display:flex;gap:8px;align-items:center;padding:10px 12px;border-bottom:1px solid #e5e7eb;background:#fafafa}
+  .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid #e5e7eb;background:#fafafa}
   .toolbar label{display:inline-flex;align-items:center;gap:8px;font-weight:600}
-  .btn{appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff}
-  .btn.secondary{background:#e2e8f0;color:#0f172a}
+  .right{margin-left:auto}
   .muted{font-size:12px;color:#64748b}
+  .btn{appearance:none;border:0;border-radius:12px;padding:10px 14px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff}
+
+  .mapWrap{position:relative}
+  .editing .mapWrap{touch-action:none} /* чтобы страница не скроллилась при перетаскивании на мобильных */
+  .map{display:block;width:100%;height:auto}
 
   /* Зоны */
   .hotspot{cursor:pointer;pointer-events:all;fill:rgba(255,165,0,0)}
-  .editing .hotspot{fill:rgba(255,165,0,.18)}
-  .zone-outline{display:none;stroke:var(--accent);stroke-width:2;stroke-dasharray:6 6;fill:none}
+  /* В режиме редактирования сама зона НЕ ловит события — только ручки и контур */
+  .editing .hotspot{pointer-events:none;fill:rgba(255,165,0,.10)}
+
+  .zone-outline{display:none;stroke:var(--accent);stroke-width:2;stroke-dasharray:6 6;fill:none;pointer-events:stroke;cursor:pointer}
   .editing .zone-outline{display:block}
-  .handle{display:none;fill:#fff;stroke:var(--accent);stroke-width:2}
-  .editing .handle{display:block}
-  .zone-label{display:none;font:700 12px/1 sans-serif;fill:#111;background:#fff}
+
+  .move-handle,.radius-handle{display:none;stroke:var(--accent);stroke-width:2}
+  .editing .move-handle,.editing .radius-handle{display:block}
+  .move-handle{fill:#fff;cursor:grab}
+  .move-handle:active{cursor:grabbing}
+  .radius-handle{fill:#fff;cursor:nesw-resize}
+
+  .zone-label{display:none;font:700 12px/1 sans-serif;fill:#111}
   .editing .zone-label{display:block}
 
-  /* Панель настройки */
-  .panel{background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.15);padding:14px 14px 6px}
+  .panel{background:#fff;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.15);padding:14px}
   .panel h3{margin:4px 0 10px}
   .field{display:grid;gap:6px;margin:8px 0}
-  .field.inline{grid-template-columns:1fr 1fr;gap:8px}
-  .field label{font-size:12px;color:#334155}
-  input[type="text"],input[type="number"],select,textarea{
-    width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font:inherit
-  }
+  .inline{grid-template-columns:1fr 1fr;gap:8px}
+  input[type="text"],input[type="number"],select,textarea{width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:10px;font:inherit}
   textarea{min-height:72px;resize:vertical}
-  .row{display:flex;gap:8px;flex-wrap:wrap}
-  .danger{background:#fecaca;color:#7f1d1d}
-  .hint{color:#94a3b8;font-size:12px;margin:6px 2px 0}
-  .spacer{height:8px}
-  .export{display:flex;gap:8px;align-items:center;margin-top:8px}
-  .export textarea{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;min-height:120px}
   .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:#f1f5f9;font-size:12px}
-  .right{margin-left:auto}
-  .small{font-size:12px}
+  .export{display:flex;gap:8px;align-items:center;margin-top:8px}
   .kbd{font-family:ui-monospace,monospace;background:#0f172a;color:#fff;padding:2px 6px;border-radius:6px}
-
-  /* Модалка */
-  .modal[hidden]{display:none}
-  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;z-index:30}
-  .modal__box{background:#fff;max-width:560px;margin:16px;padding:24px;border-radius:16px;text-align:center}
+  .danger{background:#fecaca;color:#7f1d1d}
+  .small{font-size:12px}
 </style>
 </head>
 <body>
@@ -74,35 +68,32 @@
   <!-- КАРТА -->
   <div class="card">
     <div class="toolbar">
-      <label><input type="checkbox" id="editToggle"> Режим настройки зон</label>
-      <span class="muted right">Подсказка: перетащите круг, потяните «усик» для изменения радиуса</span>
+      <label><input type="checkbox" id="editToggle"> Режим настройки</label>
+      <label><input type="checkbox" id="snapToggle"> Привязка к сетке</label>
+      <label>Шаг: <input type="number" id="snapStep" value="8" min="1" style="width:70px"></label>
+      <span class="muted right">Подсказка: тяните <span class="kbd">●</span> — двигаем, <span class="kbd">■</span> — радиус; стрелки — точная подгонка (Shift=×10)</span>
     </div>
 
-    <div class="mapWrap" id="mapWrap">
-      <!-- ВАЖНО: viewBox должен соответствовать реальному размеру 1.jpg. Здесь взят 768×1152. -->
+    <div class="mapWrap">
+      <!-- Если 1.jpg другого размера — замените размеры viewBox -->
       <svg id="svg" class="map" viewBox="0 0 768 1152" preserveAspectRatio="xMidYMid meet">
         <image id="mapImg" href="1.jpg" width="768" height="1152"/>
-
-        <!-- Слои для зон (создаются из JS на основе массива zones) -->
         <g id="zonesLayer"></g>
       </svg>
     </div>
-    <div class="muted" style="padding:8px 12px 14px">Координаты в системе <code>viewBox</code> (768×1152). При смене карты следите, чтобы размеры совпадали.</div>
   </div>
 
-  <!-- ПАНЕЛЬ НАСТРОЙКИ -->
+  <!-- ПАНЕЛЬ -->
   <div class="panel">
-    <h3>Настройки выбранной зоны</h3>
-
-    <div class="row">
-      <span class="pill" id="selectedName">—</span>
-      <span class="pill">ID: <span id="selectedId">—</span></span>
-      <button id="btnAdd" class="btn small right">+ Добавить зону</button>
+    <h3>Зона</h3>
+    <div class="field">
+      <span class="pill">ID: <span id="selId">—</span></span>
+      <span class="pill">Название: <span id="selName">—</span></span>
     </div>
 
     <div class="field">
-      <label for="zoneName">Название зоны</label>
-      <select id="zoneName">
+      <label for="nameSel">Название</label>
+      <select id="nameSel">
         <option>Скала пропитания</option>
         <option>Плато азарта</option>
         <option>Бухта тренировок</option>
@@ -116,81 +107,68 @@
     </div>
 
     <div class="field inline">
-      <div><label for="cx">X (cx)</label><input type="number" id="cx" step="1"></div>
-      <div><label for="cy">Y (cy)</label><input type="number" id="cy" step="1"></div>
+      <div><label>X (cx)</label><input type="number" id="cx"></div>
+      <div><label>Y (cy)</label><input type="number" id="cy"></div>
     </div>
-    <div class="field">
-      <label for="r">Радиус (r)</label>
-      <input type="range" id="rRange" min="20" max="200" step="1">
-      <input type="number" id="r" step="1">
+    <div class="field inline">
+      <div><label>Радиус (r)</label><input type="number" id="r" min="20" max="220"></div>
+      <div><label>Картинка</label>
+        <select id="imageSel">
+          <option>1.jpg</option><option>2.jpg</option><option>3.jpg</option><option>4.jpg</option>
+          <option>5.jpg</option><option>6.jpg</option><option>7.jpg</option><option>8.jpg</option>
+        </select>
+      </div>
     </div>
 
     <div class="field">
-      <label for="type">Действие при клике</label>
-      <select id="type">
+      <label>Действие</label>
+      <select id="action">
         <option value="link">Открыть ссылку</option>
         <option value="message">Показать сообщение</option>
       </select>
     </div>
 
-    <div class="field" id="linkField">
-      <label for="link">Ссылка (откроется после смены картинки)</label>
+    <div class="field" id="linkBox">
+      <label>Ссылка</label>
       <input type="text" id="link" placeholder="https://...">
-      <label class="small"><input type="checkbox" id="newtab"> Открыть в новой вкладке</label>
+      <label class="small"><input type="checkbox" id="newtab"> Открывать в новой вкладке</label>
     </div>
 
-    <div class="field" id="msgField" style="display:none">
-      <label for="message">Сообщение для модалки</label>
-      <textarea id="message" placeholder="Текст для всплывающего окна..."></textarea>
+    <div class="field" id="msgBox" style="display:none">
+      <label>Сообщение</label>
+      <textarea id="message" placeholder="Текст модалки"></textarea>
     </div>
 
     <div class="field">
-      <label for="image">Изображение при клике</label>
-      <select id="image">
-        <option value="1.jpg">1.jpg — базовая карта (без подсветки)</option>
-        <option value="2.jpg">2.jpg — Зона прибытия</option>
-        <option value="3.jpg">3.jpg — Лес вдохновения</option>
-        <option value="4.jpg">4.jpg — Совет племени</option>
-        <option value="5.jpg">5.jpg — Бухта тренировок</option>
-        <option value="6.jpg">6.jpg — Устье разума</option>
-        <option value="7.jpg">7.jpg — Плато азарта</option>
-        <option value="8.jpg">8.jpg — Скала пропитания</option>
-      </select>
-      <div class="hint">Эта картинка отобразится перед переходом по ссылке/перед показом сообщения.</div>
-    </div>
-
-    <div class="row">
       <button id="apply" class="btn">Применить</button>
-      <button id="deleteZone" class="btn danger">Удалить зону</button>
+      <button id="add" class="btn small" style="margin-left:8px">+ Добавить зону</button>
+      <button id="remove" class="btn danger small" style="margin-left:8px">Удалить</button>
     </div>
 
-    <div class="spacer"></div>
     <h3>Экспорт / импорт</h3>
     <div class="export">
-      <button id="btnExport" class="btn secondary">Скопировать JSON</button>
-      <input type="file" id="fileImport" accept=".json" class="right">
+      <button id="exportBtn" class="btn">Скопировать JSON</button>
+      <input type="file" id="importFile" accept=".json" class="right">
     </div>
     <div class="field">
-      <label>Текущая конфигурация зон (редактируйте и нажмите «Импорт из буфера»)</label>
       <textarea id="jsonArea" spellcheck="false"></textarea>
     </div>
-    <div class="row">
-      <button id="btnImportFromArea" class="btn secondary">Импорт из буфера</button>
-      <span class="muted">Горячие клавиши: <span class="kbd">E</span> — вкл/выкл настройку</span>
+    <div class="field">
+      <button id="importArea" class="btn">Импорт из поля</button>
     </div>
   </div>
 </div>
 
 <!-- Модалка -->
-<div id="modal" class="modal" hidden>
-  <div class="modal__box">
+<div id="modal" style="position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;place-items:center;z-index:30">
+  <div style="background:#fff;max-width:560px;margin:16px;padding:24px;border-radius:16px;text-align:center">
     <div id="modalText" style="margin-bottom:16px;font-size:18px;line-height:1.4">Сообщение…</div>
-    <button class="btn" id="modalClose">Понятно</button>
+    <button id="modalClose" class="btn">Понятно</button>
   </div>
 </div>
 
 <script>
-/* ---------- ИСХОДНЫЕ ЗОНЫ (можно править вручную) ---------- */
+/* --- ИСХОДНЫЕ ЗОНЫ --- */
 let zones = [
   {id:'food_cliff',   name:'Скала пропитания', cx:384, cy:160, r:90,  type:'link',    link:'#', image:'8.jpg', newtab:false},
   {id:'luck_plateau', name:'Плато азарта',     cx:600, cy:420, r:90,  type:'link',    link:'#', image:'7.jpg', newtab:false},
@@ -203,279 +181,257 @@ let zones = [
   {id:'camp_yellow',  name:'Лагерь жёлтых',    cx:640, cy:900, r:95,  type:'message', message:'Тут будет сообщение для ЛАГЕРЯ ЖЁЛТЫХ.',  image:'1.jpg'}
 ];
 
-/* ---------- ПРЕДЗАГРУЗКА КАРТИНОК ---------- */
+/* --- ПРЕДЗАГРУЗКА --- */
 ['1.jpg','2.jpg','3.jpg','4.jpg','5.jpg','6.jpg','7.jpg','8.jpg'].forEach(s=>{const i=new Image(); i.src=s;});
 
-/* ---------- ССЫЛКИ НА DOM ---------- */
-const svg       = document.getElementById('svg');
-const layer     = document.getElementById('zonesLayer');
-const mapImg    = document.getElementById('mapImg');
-const editToggle= document.getElementById('editToggle');
-const modal     = document.getElementById('modal');
-const modalText = document.getElementById('modalText');
-const modalClose= document.getElementById('modalClose');
+/* --- DOM --- */
+const svg=document.getElementById('svg');
+const layer=document.getElementById('zonesLayer');
+const mapImg=document.getElementById('mapImg');
+const editToggle=document.getElementById('editToggle');
+const snapToggle=document.getElementById('snapToggle');
+const snapStep=document.getElementById('snapStep');
 
-/* Панель */
-const selectedName = document.getElementById('selectedName');
-const selectedId   = document.getElementById('selectedId');
-const zoneName = document.getElementById('zoneName');
-const cxInput  = document.getElementById('cx');
-const cyInput  = document.getElementById('cy');
-const rInput   = document.getElementById('r');
-const rRange   = document.getElementById('rRange');
-const typeSel  = document.getElementById('type');
-const linkField= document.getElementById('linkField');
-const msgField = document.getElementById('msgField');
-const linkInput= document.getElementById('link');
-const newtab   = document.getElementById('newtab');
-const message  = document.getElementById('message');
-const imageSel = document.getElementById('image');
+const selId=document.getElementById('selId');
+const selName=document.getElementById('selName');
+const nameSel=document.getElementById('nameSel');
+const cxIn=document.getElementById('cx');
+const cyIn=document.getElementById('cy');
+const rIn=document.getElementById('r');
+const imageSel=document.getElementById('imageSel');
+const actionSel=document.getElementById('action');
+const linkBox=document.getElementById('linkBox');
+const msgBox=document.getElementById('msgBox');
+const linkIn=document.getElementById('link');
+const newtab=document.getElementById('newtab');
+const messageIn=document.getElementById('message');
 
-const applyBtn   = document.getElementById('apply');
-const delBtn     = document.getElementById('deleteZone');
-const addBtn     = document.getElementById('btnAdd');
+const applyBtn=document.getElementById('apply');
+const addBtn=document.getElementById('add');
+const removeBtn=document.getElementById('remove');
 
-const jsonArea   = document.getElementById('jsonArea');
-const btnExport  = document.getElementById('btnExport');
-const fileImport = document.getElementById('fileImport');
-const btnImportFromArea = document.getElementById('btnImportFromArea');
+const exportBtn=document.getElementById('exportBtn');
+const importFile=document.getElementById('importFile');
+const jsonArea=document.getElementById('jsonArea');
+const importArea=document.getElementById('importArea');
 
-/* ---------- РЕНДЕР ЗОН ---------- */
-let selected = null;     // id выбранной зоны
-let editing  = false;    // режим настройки
-let busy     = false;    // защита от повторного клика
+const modal=document.getElementById('modal');
+const modalText=document.getElementById('modalText');
+const modalClose=document.getElementById('modalClose');
 
-function renderZones(){
-  layer.innerHTML = '';
+/* --- РЕНДЕР --- */
+let selected = zones[0].id;
+let editing=false, busy=false;
+
+function render(){
+  layer.innerHTML='';
   zones.forEach(z=>{
     // контур
     const outline = document.createElementNS('http://www.w3.org/2000/svg','circle');
     outline.setAttribute('class','zone-outline');
+    outline.dataset.id=z.id;
     outline.setAttribute('cx',z.cx); outline.setAttribute('cy',z.cy); outline.setAttribute('r',z.r);
     layer.appendChild(outline);
 
-    // кликабельная зона (прозрачная)
+    // кликабельная зона (для обычного режима)
     const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
     c.setAttribute('class','hotspot');
     c.dataset.id=z.id;
     c.setAttribute('cx',z.cx); c.setAttribute('cy',z.cy); c.setAttribute('r',z.r);
     layer.appendChild(c);
 
-    // ручка для изменения радиуса
-    const handle = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    handle.setAttribute('class','handle');
-    handle.dataset.id=z.id;
-    handle.setAttribute('cx',z.cx + z.r);
-    handle.setAttribute('cy',z.cy);
-    handle.setAttribute('r',8);
-    layer.appendChild(handle);
+    // центр-ручка (движение)
+    const move = document.createElementNS('http://www.w3.org/2000/svg','circle');
+    move.setAttribute('class','move-handle');
+    move.dataset.id=z.id;
+    move.setAttribute('cx',z.cx); move.setAttribute('cy',z.cy); move.setAttribute('r',10);
+    layer.appendChild(move);
+
+    // ручка радиуса (квадрат)
+    const rh = document.createElementNS('http://www.w3.org/2000/svg','rect');
+    rh.setAttribute('class','radius-handle');
+    rh.dataset.id=z.id;
+    rh.setAttribute('x', z.cx + z.r - 7); rh.setAttribute('y', z.cy - 7); rh.setAttribute('width',14); rh.setAttribute('height',14);
+    layer.appendChild(rh);
 
     // подпись
     const label = document.createElementNS('http://www.w3.org/2000/svg','text');
     label.setAttribute('class','zone-label');
     label.dataset.id=z.id;
-    label.setAttribute('x',z.cx);
-    label.setAttribute('y',z.cy - z.r - 10);
+    label.setAttribute('x',z.cx); label.setAttribute('y',z.cy - z.r - 10);
     label.setAttribute('text-anchor','middle');
-    label.textContent = z.name;
+    label.textContent=z.name;
     layer.appendChild(label);
   });
+  refreshForm();
+  jsonArea.value = JSON.stringify(zones,null,2);
 }
-renderZones();
+render();
 
-/* ---------- ВЫБОР ЗОНЫ ДЛЯ РЕДАКТИРОВАНИЯ ---------- */
-function selectZone(id){
-  selected = id;
-  const z = zones.find(q=>q.id===id);
+function refreshForm(){
+  const z = zones.find(q=>q.id===selected) || zones[0];
   if(!z) return;
-  selectedName.textContent = z.name;
-  selectedId.textContent   = z.id;
-  zoneName.value = z.name;
-  cxInput.value = z.cx; cyInput.value = z.cy;
-  rInput.value = z.r; rRange.value = z.r;
-  typeSel.value = z.type;
-  linkInput.value = z.link || '';
-  newtab.checked = !!z.newtab;
-  message.value  = z.message || '';
-  imageSel.value = z.image || '1.jpg';
-  toggleActionFields();
-}
-function toggleActionFields(){
-  const isMsg = typeSel.value==='message';
-  msgField.style.display  = isMsg ? '' : 'none';
-  linkField.style.display = isMsg ? 'none' : '';
+  selId.textContent=z.id; selName.textContent=z.name;
+  nameSel.value=z.name; cxIn.value=Math.round(z.cx); cyIn.value=Math.round(z.cy); rIn.value=Math.round(z.r);
+  imageSel.value=z.image || '1.jpg';
+  actionSel.value=z.type; linkIn.value=z.link||''; newtab.checked=!!z.newtab; messageIn.value=z.message||'';
+  linkBox.style.display = z.type==='link' ? '' : 'none';
+  msgBox.style.display  = z.type==='message' ? '' : 'none';
 }
 
-/* Автовыбор первой зоны */
-selectZone(zones[0].id);
+/* --- РЕЖИМ --- */
+function setEditing(v){ editing=v; svg.classList.toggle('editing',editing); }
+editToggle.addEventListener('change',e=>setEditing(e.target.checked));
 
-/* ---------- ПЕРЕКЛЮЧЕНИЕ РЕЖИМА НАСТРОЙКИ ---------- */
-function setEditing(v){
-  editing = v;
-  svg.classList.toggle('editing', editing);
-}
-editToggle.addEventListener('change', e => setEditing(e.target.checked));
-document.addEventListener('keydown',e=>{
-  if(e.key.toLowerCase()==='e'){ editToggle.checked=!editToggle.checked; setEditing(editToggle.checked); }
-});
+/* --- Навигация/клики в обычном режиме --- */
+layer.addEventListener('click', (e)=>{
+  if(editing) return;
+  const id=e.target.dataset.id; if(!id) return;
+  const z=zones.find(q=>q.id===id); if(!z||busy) return;
+  busy=true; mapImg.setAttribute('href', z.image||'1.jpg');
 
-/* ---------- ПЕРЕТАСКИВАНИЕ И РЕСАЙЗ ---------- */
-let drag = null; // {id, dx, dy}
-let resize = null;// {id}
-
-function getSVGPoint(evt){
-  const pt = svg.createSVGPoint();
-  pt.x = evt.clientX; pt.y = evt.clientY;
-  return pt.matrixTransform(svg.getScreenCTM().inverse());
-}
-layer.addEventListener('pointerdown', (e)=>{
-  const t = e.target;
-  const id = t.dataset.id;
-  if(!id) return;
-
-  // клик по зоне в обычном режиме
-  if(!editing && t.classList.contains('hotspot')){
-    const z = zones.find(q=>q.id===id);
-    if (!z || busy) return;
-    busy = true;
-    const swap = z.image || '1.jpg';
-    mapImg.setAttribute('href', swap);
-
-    if(z.type==='message'){
-      setTimeout(()=>{ modalText.textContent = z.message || 'Сообщение'; modal.hidden=false; }, 250);
-      return;
-    }
-    const doNav = z.link && z.link !== '#';
-    if(doNav){
-      setTimeout(()=>{
-        if(z.newtab) window.open(z.link,'_blank'); else window.location.href=z.link;
-      }, 700);
-    }else{
-      setTimeout(()=>{ mapImg.setAttribute('href','1.jpg'); busy=false; }, 900);
-    }
+  if(z.type==='message'){
+    setTimeout(()=>{ modalText.textContent=z.message||'Сообщение'; modal.style.display='grid'; }, 250);
     return;
   }
-
-  // выбор зоны в режиме редактирования
-  if(editing && t.classList.contains('hotspot')){
-    selectZone(id);
-    const p = getSVGPoint(e);
-    const z = zones.find(q=>q.id===id);
-    drag = {id, dx:p.x - z.cx, dy:p.y - z.cy};
-    svg.setPointerCapture(e.pointerId);
-  }
-
-  // ресайз
-  if(editing && t.classList.contains('handle')){
-    selectZone(id);
-    resize = {id};
-    svg.setPointerCapture(e.pointerId);
+  if(z.link && z.link!=='#'){
+    setTimeout(()=>{ z.newtab?window.open(z.link,'_blank'):window.location.assign(z.link); }, 700);
+  }else{
+    setTimeout(()=>{ mapImg.setAttribute('href','1.jpg'); busy=false; }, 900);
   }
 });
 
-layer.addEventListener('pointermove', (e)=>{
+/* --- Выбор, перетаскивание и ресайз (только ручки/контур) --- */
+function svgPoint(evt){
+  const pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+let drag=null, resize=null, startP=null, startZ=null;
+
+layer.addEventListener('pointerdown',e=>{
+  if(!editing) return;
+  const t=e.target;
+  const id=t.dataset.id;
+  if(!id) return;
+
+  selected=id; refreshForm();
+
+  if(t.classList.contains('move-handle') || t.classList.contains('zone-outline')){
+    startP=svgPoint(e); startZ={...zones.find(z=>z.id===id)};
+    drag={id}; svg.setPointerCapture(e.pointerId);
+  }
+  if(t.classList.contains('radius-handle')){
+    startP=svgPoint(e); startZ={...zones.find(z=>z.id===id)};
+    resize={id}; svg.setPointerCapture(e.pointerId);
+  }
+});
+
+layer.addEventListener('pointermove',e=>{
   if(!(drag||resize)) return;
-  const p = getSVGPoint(e);
-  const z = zones.find(q=>q.id === (drag?drag.id:resize.id));
+  const p=svgPoint(e);
+  const z=zones.find(q=>q.id===((drag||resize).id));
   if(!z) return;
 
   if(drag){
-    z.cx = Math.max(0, Math.min(768, p.x - drag.dx));
-    z.cy = Math.max(0, Math.min(1152, p.y - drag.dy));
+    const dx=p.x-startP.x, dy=p.y-startP.y;
+    z.cx=startZ.cx+dx; z.cy=startZ.cy+dy;
+    if(snapToggle.checked){ const s=Math.max(1,Number(snapStep.value||8)); z.cx=Math.round(z.cx/s)*s; z.cy=Math.round(z.cy/s)*s; }
   }
   if(resize){
-    const dx = p.x - z.cx, dy = p.y - z.cy;
-    z.r = Math.max(20, Math.min(220, Math.hypot(dx,dy)));
+    const dx=p.x-startZ.cx, dy=p.y-startZ.cy;
+    z.r=Math.max(20,Math.min(220, Math.hypot(dx,dy)));
+    if(snapToggle.checked){ const s=Math.max(1,Number(snapStep.value||8)); z.r=Math.round(z.r/s)*s; }
   }
-  // обновить UI + перерисовать один раз «на лету»
-  cxInput.value = Math.round(z.cx); cyInput.value = Math.round(z.cy);
-  rInput.value = Math.round(z.r); rRange.value = Math.round(z.r);
-  redrawSingle(z);
+  redraw(z);
 });
 
-layer.addEventListener('pointerup', (e)=>{ drag=null; resize=null; svg.releasePointerCapture(e.pointerId); });
+layer.addEventListener('pointerup',e=>{
+  if(drag||resize){ svg.releasePointerCapture(e.pointerId); drag=resize=startP=startZ=null; jsonArea.value=JSON.stringify(zones,null,2); refreshForm(); }
+});
 
-function redrawSingle(z){
-  const sel = `[data-id="${z.id}"]`;
-  const c   = layer.querySelector(`.hotspot${sel}`);
-  const h   = layer.querySelector(`.handle${sel}`);
-  const lab = layer.querySelector(`.zone-label${sel}`);
-  const out = layer.querySelector(`.zone-outline + .hotspot${sel}`) ? null : null; // not used
-  // обновляем
-  c.setAttribute('cx',z.cx); c.setAttribute('cy',z.cy); c.setAttribute('r',z.r);
-  const outline = Array.from(layer.querySelectorAll('.zone-outline'))[zones.findIndex(q=>q.id===z.id)];
+function redraw(z){
+  // контур
+  const outline=[...layer.querySelectorAll('.zone-outline')][zones.findIndex(q=>q.id===z.id)];
   outline.setAttribute('cx',z.cx); outline.setAttribute('cy',z.cy); outline.setAttribute('r',z.r);
-  h.setAttribute('cx', z.cx + z.r); h.setAttribute('cy', z.cy);
-  lab.setAttribute('x', z.cx); lab.setAttribute('y', z.cy - z.r - 10); lab.textContent = z.name;
+  // зона
+  const c=layer.querySelector(`.hotspot[data-id="${z.id}"]`);
+  c.setAttribute('cx',z.cx); c.setAttribute('cy',z.cy); c.setAttribute('r',z.r);
+  // move-handle
+  const mh=layer.querySelector(`.move-handle[data-id="${z.id}"]`);
+  mh.setAttribute('cx',z.cx); mh.setAttribute('cy',z.cy);
+  // radius-handle
+  const rh=layer.querySelector(`.radius-handle[data-id="${z.id}"]`);
+  rh.setAttribute('x', z.cx+z.r-7); rh.setAttribute('y', z.cy-7);
+  // подпись
+  const lab=layer.querySelector(`.zone-label[data-id="${z.id}"]`);
+  lab.setAttribute('x',z.cx); lab.setAttribute('y',z.cy-z.r-10); lab.textContent=z.name;
 }
 
-/* ---------- ПРИМЕНИТЬ ИЗ ФОРМЫ ---------- */
-function applyForm(){
-  if(!selected) return;
-  const z = zones.find(q=>q.id===selected);
-  z.name   = zoneName.value;
-  z.cx     = Number(cxInput.value||z.cx);
-  z.cy     = Number(cyInput.value||z.cy);
-  z.r      = Number(rInput.value||z.r);
-  z.type   = typeSel.value;
-  z.link   = linkInput.value.trim();
-  z.newtab = !!newtab.checked;
-  z.message= message.value.trim();
-  z.image  = imageSel.value;
-  renderZones();
-  selectZone(z.id);
+/* --- Тонкая подгонка стрелками --- */
+document.addEventListener('keydown',e=>{
+  if(!editing) return;
+  const z=zones.find(q=>q.id===selected); if(!z) return;
+  const step = e.shiftKey ? 10 : 1;
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){ e.preventDefault(); }
+  if(e.key==='ArrowLeft')  z.cx-=step;
+  if(e.key==='ArrowRight') z.cx+=step;
+  if(e.key==='ArrowUp')    z.cy-=step;
+  if(e.key==='ArrowDown')  z.cy+=step;
+  if(e.key==='-')          z.r=Math.max(20, z.r-1);
+  if(e.key==='=')          z.r=Math.min(220, z.r+1);
+  if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','-','='].includes(e.key)){
+    if(snapToggle.checked){ const s=Math.max(1,Number(snapStep.value||8)); z.cx=Math.round(z.cx/s)*s; z.cy=Math.round(z.cy/s)*s; }
+    redraw(z); refreshForm(); jsonArea.value=JSON.stringify(zones,null,2);
+  }
+});
+
+/* --- ФОРМА --- */
+function apply(){
+  const z=zones.find(q=>q.id===selected); if(!z) return;
+  z.name=nameSel.value;
+  z.cx=Number(cxIn.value||z.cx);
+  z.cy=Number(cyIn.value||z.cy);
+  z.r =Number(rIn.value ||z.r);
+  z.image=imageSel.value;
+  z.type=actionSel.value;
+  z.link=linkIn.value.trim();
+  z.newtab=!!newtab.checked;
+  z.message=messageIn.value.trim();
+  redraw(z); refreshForm(); jsonArea.value=JSON.stringify(zones,null,2);
 }
-applyBtn.addEventListener('click', applyForm);
-zoneName.addEventListener('change', applyForm);
-[typeSel, rRange].forEach(el=>el.addEventListener('input', ()=>{ if(el===rRange){ rInput.value=rRange.value; } toggleActionFields(); }));
-rInput.addEventListener('input', ()=>{ rRange.value=rInput.value; });
+applyBtn.addEventListener('click',apply);
+[actionSel].forEach(el=>el.addEventListener('change',refreshForm));
+[nameSel,cxIn,cyIn,rIn,imageSel,linkIn,newtab,messageIn].forEach(el=>el.addEventListener('change',apply));
 
-/* ---------- ДОБАВИТЬ/УДАЛИТЬ ЗОНУ ---------- */
-addBtn.addEventListener('click', ()=>{
-  const id = 'zone_' + Math.random().toString(36).slice(2,7);
-  const z = {id, name:'Новая зона', cx:384, cy:576, r:80, type:'link', link:'#', image:'1.jpg', newtab:false};
-  zones.push(z);
-  renderZones(); selectZone(z.id);
+/* --- Добавить/Удалить --- */
+addBtn.addEventListener('click',()=>{
+  const id='zone_'+Math.random().toString(36).slice(2,7);
+  const z={id,name:'Новая зона',cx:384,cy:576,r:80,type:'link',link:'#',image:'1.jpg',newtab:false};
+  zones.push(z); render(); selected=id; refreshForm();
 });
-delBtn.addEventListener('click', ()=>{
-  if(!selected) return;
-  const i = zones.findIndex(z=>z.id===selected);
-  if(i>-1){ zones.splice(i,1); renderZones(); if(zones[0]) selectZone(zones[0].id); }
+removeBtn.addEventListener('click',()=>{
+  const i=zones.findIndex(z=>z.id===selected);
+  if(i>-1){ zones.splice(i,1); render(); selected=zones[0]?.id; refreshForm(); }
 });
 
-/* ---------- ЭКСПОРТ/ИМПОРТ ---------- */
-function refreshJSON(){
-  jsonArea.value = JSON.stringify(zones, null, 2);
-}
-refreshJSON();
-
-btnExport.addEventListener('click', async ()=>{
-  refreshJSON();
-  try{
-    await navigator.clipboard.writeText(jsonArea.value);
-    btnExport.textContent='Скопировано!'; setTimeout(()=>btnExport.textContent='Скопировать JSON',1200);
-  }catch(e){ alert('Скопируйте вручную из поля ниже.'); }
+/* --- Экспорт/Импорт --- */
+exportBtn.addEventListener('click',async()=>{
+  const txt=JSON.stringify(zones,null,2);
+  jsonArea.value=txt;
+  try{ await navigator.clipboard.writeText(txt); exportBtn.textContent='Скопировано!'; setTimeout(()=>exportBtn.textContent='Скопировать JSON',1200); }catch{}
 });
-fileImport.addEventListener('change', async (e)=>{
-  const file = e.target.files?.[0]; if(!file) return;
-  const text = await file.text();
-  try{
-    zones = JSON.parse(text);
-    renderZones(); selectZone(zones[0]?.id); refreshJSON();
-  }catch(err){ alert('Не удалось прочитать JSON'); }
+importFile.addEventListener('change',async(e)=>{
+  const f=e.target.files?.[0]; if(!f) return;
+  try{ zones=JSON.parse(await f.text()); render(); }catch{ alert('Некорректный JSON'); }
 });
-btnImportFromArea.addEventListener('click', ()=>{
-  try{
-    const data = JSON.parse(jsonArea.value);
-    zones = data; renderZones(); selectZone(zones[0]?.id); refreshJSON();
-  }catch(err){ alert('Некорректный JSON'); }
+importArea.addEventListener('click',()=>{
+  try{ zones=JSON.parse(jsonArea.value); render(); }catch{ alert('Некорректный JSON'); }
 });
 
-/* ---------- МОДАЛКА ---------- */
-function closeModal(){ modal.hidden=true; mapImg.setAttribute('href','1.jpg'); busy=false; }
+/* --- Модалка --- */
+function closeModal(){ modal.style.display='none'; mapImg.setAttribute('href','1.jpg'); busy=false; }
+modalClose.addEventListener('click',closeModal);
 modal.addEventListener('click',e=>{ if(e.target===modal) closeModal(); });
-modalClose.addEventListener('click', closeModal);
-document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !modal.hidden) closeModal(); });
 </script>
 </body>
-  </html>
+</html>
