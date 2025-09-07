@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Остров — кликабельная карта (GetCourse совместимость)</title>
+<title>Остров — кликабельная карта (в iframe)</title>
 
 <!-- Базовая карта и версии с индикатором -->
 <link rel="preload" as="image" href="1.jpg">
@@ -23,23 +23,18 @@
     font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
   }
 
-  /* Контейнеры без обрезки */
-  .wrap{width:100%; max-width:100%; margin:0 auto; overflow:visible !important;}
-  .card{
-    background:#fff;
-    border-radius:0;
-    box-shadow:none;
-    overflow:visible !important; /* критично для GC */
-  }
+  /* Центрируем карту и не даём ничему её обрезать */
+  .wrap{width:100%; max-width:100%; margin:0 auto; display:flex; justify-content:center; overflow:visible!important;}
+  .card{background:#fff; border-radius:0; box-shadow:none; overflow:visible!important;}
 
-  /* SVG тянется по ширине и держит пропорции.
-     aspect-ratio страхует браузеры, где height:auto у svg работает нестабильно */
+  /* КЛЮЧЕВОЕ: карта одновременно вписывается в ширину и в высоту окна iframe
+     768×1152 — реальный размер исходной карты (ширина/высота). */
   .map{
     display:block;
-    width:100% !important;
-    max-width:100% !important;
-    height:auto !important;
-    aspect-ratio: 768 / 1152; /* ширина / высота исходной карты */
+    width:min(100%, calc(100vh * 768 / 1152)); /* <= ширины контейнера И <= высоты окна */
+    height:auto;
+    aspect-ratio:768/1152;
+    max-width:100%;
   }
 
   /* Невидимые кликабельные зоны (без синего выделения) */
@@ -64,7 +59,7 @@
 <body>
 <div class="wrap">
   <div class="card">
-    <!-- Важно: viewBox соответствует реальному размеру исходной карты 768×1152 -->
+    <!-- viewBox = реальному размеру 768×1152 -->
     <svg id="svg" class="map" viewBox="0 0 768 1152" preserveAspectRatio="xMidYMid meet">
       <image id="mapImg" href="1.jpg" width="768" height="1152"/>
       <g id="zonesLayer"></g>
@@ -81,7 +76,7 @@
 </div>
 
 <script>
-/* -------- сообщения для лагерей -------- */
+/* ---- Сообщения для лагерей ---- */
 const MSG_RED = [
   '🔥 Лагерь Красных на связи! Собираемся и жжём сегодняшние шаги.',
   'Пламя разгорелось — пора в Бухту тренировок.',
@@ -100,34 +95,27 @@ const MSG_YELLOW = [
 ];
 const pick = a => a[Math.floor(Math.random()*a.length)];
 
-/* -------- зоны + ссылки (открываются в новой вкладке) -------- */
+/* ---- Зоны + ссылки (в новой вкладке) ---- */
 const zones = [
   {id:'food_cliff',   name:'Скала пропитания', cx:384, cy:160, r:137, type:'link',
    link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789818', image:'8.jpg'},
-
   {id:'luck_plateau', name:'Плато азарта',     cx:621, cy:373, r:146, type:'link',
    link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789823', image:'7.jpg'},
-
   {id:'mind_mouth',   name:'Устье разума',     cx:423, cy:369, r: 68, type:'link',
    link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789821', image:'6.jpg'},
-
   {id:'workout_bay',  name:'Бухта тренировок', cx:151, cy:491, r:112, type:'link',
    link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789815', image:'5.jpg'},
-
   {id:'tribe_council',name:'Совет племени',    cx:384, cy:588, r: 98, type:'link',
    link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789822', image:'4.jpg'},
-
   {id:'inspire_forest',name:'Лес вдохновения', cx:625, cy:629, r:117, type:'link',
    link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789826', image:'3.jpg'},
-
   {id:'arrival',      name:'Зона прибытия',    cx:165, cy:835, r: 69, type:'link',
    link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789820', image:'2.jpg'},
-
   {id:'camp_red',     name:'Лагерь красных',   cx:187, cy:694, r: 95, type:'message', image:'1.jpg'},
   {id:'camp_yellow',  name:'Лагерь жёлтых',    cx:565, cy:850, r: 95, type:'message', image:'1.jpg'}
 ];
 
-/* -------- предзагрузка индикаторных карт -------- */
+/* ---- Предзагрузка карт ---- */
 ['1.jpg','2.jpg','3.jpg','4.jpg','5.jpg','6.jpg','7.jpg','8.jpg'].forEach(src=>{ const i=new Image(); i.src=src; });
 
 const svg   = document.getElementById('svg');
@@ -139,33 +127,24 @@ const modalClose= document.getElementById('modalClose');
 
 let hoverId=null, pressId=null;
 
-/* -------- FIX для GetCourse: убираем overflow у родителей и задаём точную высоту SVG -------- */
-(function fitForGetCourse(){
-  // 1) Снимаем overflow/ограничения у ближайших 5 родителей
-  let p = svg.parentElement, steps=0;
-  while (p && steps<5){
-    try{
-      const cs = getComputedStyle(p);
-      if (cs.overflow !== 'visible' || cs.maxHeight !== 'none') {
-        p.style.overflow = 'visible';
-        p.style.maxHeight = 'none';
-        p.style.height = 'auto';
-      }
-    }catch(_){}
-    p = p.parentElement; steps++;
-  }
-  // 2) Жёстко считаем высоту по ширине (1152/768 = 1.5)
-  const RATIO = 1152/768;
-  function resize(){
-    const w = svg.clientWidth || svg.getBoundingClientRect().width;
-    svg.style.height = (w * RATIO) + 'px';
-  }
-  new ResizeObserver(resize).observe(svg.parentElement || document.body);
-  window.addEventListener('orientationchange', resize);
-  resize();
+/* ---- Фолбэк для старых браузеров: если min()/aspect-ratio не работают ---- */
+(function fallbackSize(){
+  function supportsAspect(){ return CSS && CSS.supports && CSS.supports('aspect-ratio', '1 / 1'); }
+  function supportsMin(){ return CSS && CSS.supports && CSS.supports('width', 'min(100%, 50vw)'); }
+  if (supportsAspect() && supportsMin()) return;
+  const RATIO = 768/1152; // width / height
+  const apply = () => {
+    const wContainer = svg.parentElement.getBoundingClientRect().width;
+    const wByHeight  = window.innerHeight * RATIO;
+    svg.style.width  = Math.min(wContainer, wByHeight) + 'px';
+    svg.style.height = 'auto';
+  };
+  window.addEventListener('resize', apply);
+  window.addEventListener('orientationchange', apply);
+  apply();
 })();
 
-/* -------- Рендер зон -------- */
+/* ---- Рендер зон ---- */
 zones.forEach(z=>{
   const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
   c.classList.add('hotspot');
@@ -177,16 +156,16 @@ zones.forEach(z=>{
   if (z.type === 'message') c.setAttribute('tabindex','0'); // клавиатура только для модалки
   layer.appendChild(c);
 
-  // hover/leave
+  // Навели — показать подсветку
   c.addEventListener('pointerenter', ()=>{ hoverId=z.id; mapImg.setAttribute('href', z.image||'1.jpg'); });
   c.addEventListener('pointerleave', ()=>{ if(hoverId===z.id && !pressId){ hoverId=null; mapImg.setAttribute('href','1.jpg'); }});
   c.addEventListener('focus', ()=>{ if(z.type==='message'){ hoverId=z.id; mapImg.setAttribute('href', z.image||'1.jpg'); }});
   c.addEventListener('blur',  ()=>{ if(hoverId===z.id && !pressId){ hoverId=null; mapImg.setAttribute('href','1.jpg'); }});
 
-  // press
+  // Нажали — тоже подсветка
   c.addEventListener('pointerdown', e=>{ pressId=z.id; mapImg.setAttribute('href', z.image||'1.jpg'); if(z.type==='link') c.blur?.(); e.preventDefault(); }, {passive:false});
 
-  // action
+  // Действие
   c.addEventListener('pointerup', ()=>{
     const stillHover = (hoverId===z.id);
     pressId=null;
@@ -210,7 +189,7 @@ zones.forEach(z=>{
   c.addEventListener('pointercancel', ()=>{ pressId=null; if(!hoverId) mapImg.setAttribute('href','1.jpg'); });
 });
 
-/* Если курсор ушёл с карты — вернём базовую */
+/* Ушли курсором с карты — вернуть базовую */
 svg.addEventListener('pointerleave', ()=>{ hoverId=null; pressId=null; mapImg.setAttribute('href','1.jpg'); });
 
 /* Модалка */
