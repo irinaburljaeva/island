@@ -3,8 +3,9 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Остров — карта (панель зума вне карты)</title>
+<title>Остров — карта по центру (без зума)</title>
 
+<!-- Базовая карта и версии с индикатором -->
 <link rel="preload" as="image" href="1.jpg">
 <link rel="preload" as="image" href="2.jpg">
 <link rel="preload" as="image" href="3.jpg">
@@ -16,34 +17,55 @@
 
 <style>
   html,body{height:100%}
-  body{margin:0;background:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-
-  .wrap{width:100%;max-width:100%;margin:0 auto;display:flex;justify-content:center}
-  .card{position:relative;background:#fff;width:100%} /* важное: ширина во всю колонку */
-
-  /* панель зума — ВНЕ карты, компактная и по центру */
-  .zoombar{
-    display:flex;justify-content:center;gap:8px;align-items:center;
-    width:100%;padding:6px 0;margin:4px 0 8px;
-    background:transparent
-  }
-  .zoombar .stat{min-width:52px;text-align:center;font-variant-numeric:tabular-nums;font-weight:700}
-  .zoombar button{
-    appearance:none;border:0;border-radius:8px;padding:6px 10px;
-    background:#0ea5e9;color:#fff;font-weight:800;cursor:pointer;line-height:1
+  body{
+    margin:0;
+    background:#fff;
+    font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
   }
 
-  /* контейнер карты: если карта больше видимой высоты — появится скролл */
-  .mapBox{position:relative;overflow:auto}
+  /* Центруем весь блок карты на странице/в iframe */
+  .wrap{
+    min-height:100vh;
+    display:flex;
+    justify-content:center; /* по центру по горизонтали */
+    align-items:flex-start; /* прижато к верху, чтобы не «уплывало» */
+    padding:12px 8px;
+  }
 
-  /* svg — реальные width/height задаёт JS (без transform) */
-  .map{display:block}
+  /* Внутренний контейнер на всю ширину центральной колонки */
+  .card{
+    width:100%;
+    max-width:768px;          /* карта может стать большой, но не больше исходной ширины */
+    margin:0 auto;
+    background:#fff;
+  }
 
-  /* зоны (без синего выделения) */
-  .hotspot{cursor:pointer;fill:transparent;pointer-events:all;outline:none;-webkit-tap-highlight-color:transparent;user-select:none}
-  .hotspot[data-type="link"]:focus,.hotspot[data-type="link"]:focus-visible{outline:none}
+  /* Если карта выше окна — включаем прокрутку внутри карты, ничего не режем */
+  .mapBox{
+    max-height:calc(100vh - 24px); /* высота окна минус небольшие отступы */
+    overflow:auto;
+  }
 
-  /* модалка */
+  /* SVG-карта: масштабируется по ширине колонки */
+  .map{
+    display:block;
+    width:100%;        /* во всю ширину .card */
+    height:auto;       /* сохраняем пропорции */
+  }
+
+  /* Невидимые кликабельные зоны (и без синего выделения) */
+  .hotspot{
+    cursor:pointer;
+    fill:transparent;
+    pointer-events:all;
+    outline:none;
+    -webkit-tap-highlight-color:transparent;
+    user-select:none; -webkit-user-select:none;
+  }
+  .hotspot[data-type="link"]:focus,
+  .hotspot[data-type="link"]:focus-visible{ outline:none; }
+
+  /* Модалка */
   .modal[hidden]{display:none}
   .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:grid;place-items:center;z-index:9999}
   .modal__box{background:#fff;max-width:560px;margin:16px;padding:24px;border-radius:16px;text-align:center}
@@ -53,16 +75,8 @@
 <body>
 <div class="wrap">
   <div class="card">
-    <!-- ПАНЕЛЬ ЗУМА (вне карты) -->
-    <div class="zoombar">
-      <button id="zmMinus" aria-label="Уменьшить">−</button>
-      <span class="stat" id="zmStat">100%</span>
-      <button id="zmPlus" aria-label="Увеличить">+</button>
-    </div>
-
-    <!-- КАРТА -->
-    <div class="mapBox" id="mapBox">
-      <!-- viewBox = 768×1152 -->
+    <div class="mapBox">
+      <!-- ВАЖНО: viewBox = фактический размер исходной карты 768×1152 -->
       <svg id="svg" class="map" viewBox="0 0 768 1152" preserveAspectRatio="xMidYMid meet">
         <image id="mapImg" href="1.jpg" width="768" height="1152"/>
         <g id="zonesLayer"></g>
@@ -80,135 +94,127 @@
 </div>
 
 <script>
-/* сообщения */
-const MSG_RED = ['🔥 Лагерь Красных на связи! Собираемся и жжём сегодняшние шаги.','Пламя разгорелось — пора в Бухту тренировок.','Наш девиз: «Мало слов — больше шагов». В бой!','Горячий квест дня: 10 минут темповой ходьбы + вода. Сделано?','Топим прокрастинацию: 3…2…1 — пошли!','Сегодня охота за очками: берём лидерство?'];
-const MSG_YELLOW = ['🌞 Лагерь Жёлтых светит ярче! Включаем энергию и шагаем.','Солнышко зовёт: «+1000 шагов до обеда». Успеем?','Наш девиз: «Легко, светло, результатно». Поехали!','День лёгкости: 15 минут шагов + растяжка.','Улыбка + музыка = быстрые калории. Вперёд!','Держим лидерство! Оставим Красных позади?'];
-const pick = a => a[Math.floor(Math.random()*a.length)];
+/* Случайные сообщения */
+const MSG_RED = [
+  '🔥 Лагерь Красных на связи! Собираемся и жжём сегодняшние шаги.',
+  'Пламя разгорелось — пора в Бухту тренировок.',
+  'Наш девиз: «Мало слов — больше шагов». В бой!',
+  'Горячий квест дня: 10 минут темповой ходьбы + вода. Сделано?',
+  'Топим прокрастинацию: 3…2…1 — пошли!',
+  'Сегодня охота за очками: берём лидерство?'
+];
+const MSG_YELLOW = [
+  '🌞 Лагерь Жёлтых светит ярче! Включаем энергию и шагаем.',
+  'Солнышко зовёт: «+1000 шагов до обеда». Успеем?',
+  'Наш девиз: «Легко, светло, результатно». Поехали!',
+  'День лёгкости: 15 минут шагов + растяжка.',
+  'Улыбка + музыка = быстрые калории. Вперёд!',
+  'Держим лидерство! Оставим Красных позади?'
+];
+const pick = arr => arr[Math.floor(Math.random()*arr.length)];
 
-/* зоны + ссылки */
+/* Зоны + ссылки в новой вкладке */
 const zones = [
-  {id:'food_cliff',   name:'Скала пропитания', cx:384, cy:160, r:137, type:'link', link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789818', image:'8.jpg'},
-  {id:'luck_plateau', name:'Плато азарта',     cx:621, cy:373, r:146, type:'link', link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789823', image:'7.jpg'},
-  {id:'mind_mouth',   name:'Устье разума',     cx:423, cy:369, r: 68, type:'link', link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789821', image:'6.jpg'},
-  {id:'workout_bay',  name:'Бухта тренировок', cx:151, cy:491, r:112, type:'link', link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789815', image:'5.jpg'},
-  {id:'tribe_council',name:'Совет племени',    cx:384, cy:588, r: 98, type:'link', link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789822', image:'4.jpg'},
-  {id:'inspire_forest',name:'Лес вдохновения', cx:625, cy:629, r:117, type:'link', link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789826', image:'3.jpg'},
-  {id:'arrival',      name:'Зона прибытия',    cx:165, cy:835, r: 69, type:'link', link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789820', image:'2.jpg'},
+  {id:'food_cliff',   name:'Скала пропитания', cx:384, cy:160, r:137, type:'link',
+   link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789818', image:'8.jpg'},
+  {id:'luck_plateau', name:'Плато азарта',     cx:621, cy:373, r:146, type:'link',
+   link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789823', image:'7.jpg'},
+  {id:'mind_mouth',   name:'Устье разума',     cx:423, cy:369, r: 68, type:'link',
+   link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789821', image:'6.jpg'},
+  {id:'workout_bay',  name:'Бухта тренировок', cx:151, cy:491, r:112, type:'link',
+   link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789815', image:'5.jpg'},
+  {id:'tribe_council',name:'Совет племени',    cx:384, cy:588, r: 98, type:'link',
+   link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789822', image:'4.jpg'},
+  {id:'inspire_forest',name:'Лес вдохновения', cx:625, cy:629, r:117, type:'link',
+   link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789826', image:'3.jpg'},
+  {id:'arrival',      name:'Зона прибытия',    cx:165, cy:835, r: 69, type:'link',
+   link:'https://my.walk-walk.ru/teach/control/stream/view/id/934789820', image:'2.jpg'},
   {id:'camp_red',     name:'Лагерь красных',   cx:187, cy:694, r: 95, type:'message', image:'1.jpg'},
   {id:'camp_yellow',  name:'Лагерь жёлтых',    cx:565, cy:850, r: 95, type:'message', image:'1.jpg'}
 ];
 
-/* предзагрузка карт */
-['1.jpg','2.jpg','3.jpg','4.jpg','5.jpg','6.jpg','7.jpg','8.jpg'].forEach(s=>{const i=new Image(); i.src=s;});
+/* Предзагрузка изображений */
+['1.jpg','2.jpg','3.jpg','4.jpg','5.jpg','6.jpg','7.jpg','8.jpg'].forEach(src=>{ const i=new Image(); i.src=src; });
 
-const svg     = document.getElementById('svg');
-const layer   = document.getElementById('zonesLayer');
-const mapImg  = document.getElementById('mapImg');
-const mapBox  = document.getElementById('mapBox');
-const modal   = document.getElementById('modal');
+const svg   = document.getElementById('svg');
+const layer = document.getElementById('zonesLayer');
+const mapImg= document.getElementById('mapImg');
+const modal = document.getElementById('modal');
 const modalText = document.getElementById('modalText');
 const modalClose= document.getElementById('modalClose');
-const zmMinus = document.getElementById('zmMinus');
-const zmPlus  = document.getElementById('zmPlus');
-const zmStat  = document.getElementById('zmStat');
 
-/* адаптивная база + зум (через реальные width/height) */
-const RATIO = 1152/768; // h/w
-const IS_DESKTOP = window.matchMedia('(pointer:fine) and (min-width:1024px)').matches;
+let hoverId = null, pressId = null;
 
-let baseW = 600;
-let baseH = Math.round(baseW * RATIO);
-let scale = 1.0;                        // стартовый масштаб
-const MIN_SCALE = 0.9, MAX_SCALE = 2.2, STEP = 0.1;
-
-function fitBaseSize(){
-  const container = document.querySelector('.wrap') || mapBox.parentElement || document.body;
-  const cw = container.getBoundingClientRect().width;
-
-  const topY = mapBox.getBoundingClientRect().top;
-  const availH = Math.max(240, window.innerHeight - topY - 6);
-
-  // десктоп — во всю ширину колонки; мобильные — не выше окна
-  if (IS_DESKTOP){
-    baseW = Math.max(420, cw);
-  }else{
-    baseW = Math.max(300, Math.min(cw, Math.floor(availH / RATIO)));
-  }
-  baseH = Math.round(baseW * RATIO);
-  applySize();
-}
-
-function applySize(){
-  const w = Math.round(baseW * scale);
-  const h = Math.round(baseH * scale);
-  svg.style.width  = w + 'px';
-  svg.style.height = h + 'px';
-
-  const topY = mapBox.getBoundingClientRect().top;
-  const availH = Math.max(240, window.innerHeight - topY - 6);
-  mapBox.style.maxHeight = Math.floor(availH) + 'px';
-  mapBox.style.overflow  = (h > availH) ? 'auto' : 'visible';
-
-  zmStat.textContent = Math.round(scale*100) + '%';
-}
-
-function setScale(next){
-  scale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, next));
-  applySize();
-}
-
-/* ресайз/скролл */
-const ro = new ResizeObserver(fitBaseSize);
-ro.observe(document.querySelector('.wrap') || mapBox.parentElement || document.body);
-window.addEventListener('resize', fitBaseSize, {passive:true});
-window.addEventListener('scroll', fitBaseSize, {passive:true});
-window.addEventListener('orientationchange', fitBaseSize);
-document.addEventListener('DOMContentLoaded', fitBaseSize);
-setTimeout(fitBaseSize, 60);
-
-/* кнопки зума */
-zmMinus.addEventListener('click', ()=> setScale(scale - STEP));
-zmPlus .addEventListener('click', ()=> setScale(scale + STEP));
-
-/* ховер/клик по зонам */
-let hoverId=null, pressId=null;
-
+/* Рендер зон и события */
 zones.forEach(z=>{
-  const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
   c.classList.add('hotspot');
-  c.dataset.id=z.id; c.dataset.type=z.type;
-  c.setAttribute('cx',z.cx); c.setAttribute('cy',z.cy); c.setAttribute('r',z.r);
-  if(z.type==='message') c.setAttribute('tabindex','0');
+  c.dataset.id = z.id;
+  c.dataset.type = z.type;
+  c.setAttribute('cx', z.cx);
+  c.setAttribute('cy', z.cy);
+  c.setAttribute('r',  z.r);
+  if (z.type === 'message') c.setAttribute('tabindex','0');
   layer.appendChild(c);
 
-  c.addEventListener('pointerenter',()=>{ hoverId=z.id; mapImg.setAttribute('href', z.image||'1.jpg'); });
-  c.addEventListener('pointerleave',()=>{ if(hoverId===z.id && !pressId){ hoverId=null; mapImg.setAttribute('href','1.jpg'); }});
-  c.addEventListener('focus',()=>{ if(z.type==='message'){ hoverId=z.id; mapImg.setAttribute('href', z.image||'1.jpg'); }});
-  c.addEventListener('blur', ()=>{ if(hoverId===z.id && !pressId){ hoverId=null; mapImg.setAttribute('href','1.jpg'); }});
-
-  c.addEventListener('pointerdown',e=>{ pressId=z.id; mapImg.setAttribute('href', z.image||'1.jpg'); if(z.type==='link') c.blur?.(); e.preventDefault(); }, {passive:false});
-
-  c.addEventListener('pointerup',()=>{
-    const stillHover=(hoverId===z.id); pressId=null;
-    if(z.type==='message'){
-      const msg = z.id==='camp_red'?pick(MSG_RED): z.id==='camp_yellow'?pick(MSG_YELLOW):(z.message||'Сообщение');
-      modalText.textContent=msg; modal.hidden=false; return;
-    }
-    if(z.type==='link' && z.link && z.link!=='#'){
-      const win=window.open(z.link,'_blank'); if(win) win.opener=null;
-      if(!stillHover) mapImg.setAttribute('href','1.jpg'); return;
-    }
-    if(!stillHover) mapImg.setAttribute('href','1.jpg');
+  // hover: показать соответствующую картинку
+  c.addEventListener('pointerenter', () => {
+    hoverId = z.id;
+    mapImg.setAttribute('href', z.image || '1.jpg');
   });
-  c.addEventListener('pointercancel',()=>{ pressId=null; if(!hoverId) mapImg.setAttribute('href','1.jpg'); });
+  c.addEventListener('pointerleave', () => {
+    if (hoverId === z.id && !pressId) {
+      hoverId = null;
+      mapImg.setAttribute('href', '1.jpg');
+    }
+  });
+
+  // доступность с клавиатуры для модалок
+  c.addEventListener('focus', () => {
+    if (z.type === 'message') { hoverId = z.id; mapImg.setAttribute('href', z.image || '1.jpg'); }
+  });
+  c.addEventListener('blur', () => {
+    if (hoverId === z.id && !pressId) { hoverId = null; mapImg.setAttribute('href','1.jpg'); }
+  });
+
+  // press: подсветка
+  c.addEventListener('pointerdown', (e) => {
+    pressId = z.id;
+    mapImg.setAttribute('href', z.image || '1.jpg');
+    if (z.type === 'link') c.blur?.();
+    e.preventDefault();
+  }, {passive:false});
+
+  // action: открыть ссылку / показать модалку
+  c.addEventListener('pointerup', () => {
+    const stillHover = (hoverId === z.id);
+    pressId = null;
+
+    if (z.type === 'message') {
+      const msg = z.id === 'camp_red' ? pick(MSG_RED)
+               : z.id === 'camp_yellow' ? pick(MSG_YELLOW)
+               : (z.message || 'Сообщение');
+      modalText.textContent = msg;
+      modal.hidden = false;
+      return;
+    }
+    if (z.type === 'link' && z.link && z.link !== '#') {
+      const w = window.open(z.link, '_blank'); if (w) w.opener = null;
+      if (!stillHover) mapImg.setAttribute('href','1.jpg');
+      return;
+    }
+    if (!stillHover) mapImg.setAttribute('href','1.jpg');
+  });
+
+  c.addEventListener('pointercancel', () => { pressId = null; if (!hoverId) mapImg.setAttribute('href','1.jpg'); });
 });
 
-svg.addEventListener('pointerleave',()=>{ hoverId=null; pressId=null; mapImg.setAttribute('href','1.jpg'); });
+svg.addEventListener('pointerleave', () => { hoverId=null; pressId=null; mapImg.setAttribute('href','1.jpg'); });
 
-/* модалка */
-modalClose.addEventListener('click',()=>{ modal.hidden=true; mapImg.setAttribute('href','1.jpg'); });
-modal.addEventListener('click',(e)=>{ if(e.target===modal){ modal.hidden=true; mapImg.setAttribute('href','1.jpg'); }});
-document.addEventListener('keydown',(e)=>{ if(e.key==='Escape' && !modal.hidden){ modal.hidden=true; mapImg.setAttribute('href','1.jpg'); }});
+/* Модалка */
+modalClose.addEventListener('click', () => { modal.hidden=true; mapImg.setAttribute('href','1.jpg'); });
+modal.addEventListener('click', (e) => { if (e.target === modal) { modal.hidden = true; mapImg.setAttribute('href','1.jpg'); } });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !modal.hidden) { modal.hidden = true; mapImg.setAttribute('href','1.jpg'); } });
 </script>
 </body>
 </html>
