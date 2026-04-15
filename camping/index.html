@@ -397,10 +397,6 @@ body {
     <div class="total-label">Шагов всей командой</div>
     <div class="total-count" id="totalDisplay">0</div>
     <div class="total-goal">из <strong>1 000 000</strong> — цель похода</div>
-    <div class="progress-wrap">
-      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-    </div>
-    <div class="progress-pct" id="progressPct">0%</div>
     <div class="remaining-badge">⛰️ До цели: <span class="num" id="remainingDisplay">1&nbsp;000&nbsp;000</span> шагов</div>
   </div>
 
@@ -744,7 +740,12 @@ function renderMap() {
     });
   });
 
-  var bootWp = currentWp || (teamTotal>=GOAL ? WAYPOINTS[6] : WAYPOINTS[0]);
+  // Сапожок: на текущей точке, если прогресса нет — на старте
+  var bootWp = currentWp;
+  if(!bootWp) {
+    if(teamTotal >= GOAL) bootWp = WAYPOINTS[6];
+    else bootWp = WAYPOINTS[0]; // всегда показываем на старте если 0 шагов
+  }
   var boot = document.createElement("div");
   boot.className = "map-boot";
   boot.style.left = bootWp.x + "%";
