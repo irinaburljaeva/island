@@ -10,17 +10,13 @@
   --green-dark: #1a4a2e;
   --green-mid: #2d6a4f;
   --green-light: #52b788;
-  --green-pale: #d8f3dc;
   --orange: #f4732a;
   --orange-light: #ff9a5c;
   --cream: #fdf6ec;
   --text: #1a2e1e;
   --white: #ffffff;
-  --brown: #6b4226;
 }
-
 * { margin: 0; padding: 0; box-sizing: border-box; }
-
 body {
   font-family: 'Nunito', sans-serif;
   background: var(--green-dark);
@@ -29,946 +25,846 @@ body {
   overflow-x: hidden;
 }
 
-/* ===== HEADER ===== */
-.header {
+/* LOADING */
+#loadingScreen {
+  position: fixed; inset: 0;
   background: var(--green-dark);
-  padding: 16px 20px;
-  text-align: center;
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  z-index: 1000; gap: 16px;
+}
+.loading-icon { font-size: 48px; animation: spin 2s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-family: 'Unbounded', sans-serif; font-size: 13px; color: var(--green-light); }
+
+/* LOGIN */
+#loginScreen {
+  display: none; min-height: 100vh;
+  align-items: center; justify-content: center;
+  padding: 24px 20px; flex-direction: column; text-align: center;
+}
+#loginScreen.active { display: flex; }
+.login-logo { font-family: 'Unbounded', sans-serif; font-size: 22px; font-weight: 900; margin-bottom: 4px; }
+.login-logo span { color: var(--orange); }
+.login-card {
+  background: linear-gradient(135deg, #2d6a4f, #1e5038);
+  border-radius: 24px; padding: 28px 24px;
+  border: 1px solid rgba(82,183,136,0.3);
+  max-width: 340px; width: 100%; margin-top: 20px;
+}
+.login-title { font-family: 'Unbounded', sans-serif; font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+.login-sub { font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 18px; line-height: 1.5; }
+.login-input {
+  width: 100%; padding: 14px 16px; border-radius: 14px;
+  border: 2px solid rgba(82,183,136,0.4);
+  background: rgba(255,255,255,0.08); color: white;
+  font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 700;
+  margin-bottom: 12px; transition: border 0.2s;
+}
+.login-input::placeholder { color: rgba(255,255,255,0.3); font-weight: 400; }
+.login-input:focus { outline: none; border-color: var(--orange-light); }
+
+/* MAIN APP */
+#mainApp { display: none; padding-bottom: 40px; }
+#mainApp.active { display: block; }
+
+/* TOP BAR */
+.topbar {
+  background: var(--green-dark); padding: 13px 20px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+.topbar-logo { font-family: 'Unbounded', sans-serif; font-size: 16px; font-weight: 900; }
+.topbar-logo span { color: var(--orange); }
+.topbar-user {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 13px; font-weight: 700; color: var(--green-light); cursor: pointer;
+}
+.user-avatar {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, var(--green-mid), var(--green-light));
+  display: flex; align-items: center; justify-content: center; font-size: 14px;
 }
 
-.logo {
-  font-family: 'Unbounded', sans-serif;
-  font-size: 20px;
-  font-weight: 900;
-  letter-spacing: -0.5px;
-  color: var(--white);
-}
-
-.logo span { color: var(--orange); }
-
-.subtitle-tag {
-  display: inline-block;
-  background: var(--orange);
-  color: white;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 20px;
-  margin-top: 4px;
-  letter-spacing: 0.5px;
-}
-
-/* ===== PROGRESS HERO ===== */
+/* PROGRESS HERO */
 .progress-hero {
   background: linear-gradient(160deg, #2d6a4f 0%, #1a4a2e 60%, #0d2b18 100%);
-  padding: 24px 20px 32px;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
+  padding: 22px 20px 28px; text-align: center; position: relative; overflow: hidden;
 }
-
 .progress-hero::before {
-  content: '';
-  position: absolute;
-  top: -60px; right: -60px;
+  content: ''; position: absolute; top: -60px; right: -60px;
   width: 200px; height: 200px;
   background: radial-gradient(circle, rgba(244,115,42,0.15) 0%, transparent 70%);
   pointer-events: none;
 }
-
-.total-steps-label {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--green-light);
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  margin-bottom: 4px;
+.total-label {
+  font-size: 12px; font-weight: 700; color: var(--green-light);
+  letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 4px;
 }
-
-.total-steps-count {
-  font-family: 'Unbounded', sans-serif;
-  font-size: 48px;
-  font-weight: 900;
-  color: var(--white);
-  line-height: 1;
-  letter-spacing: -2px;
+.total-count {
+  font-family: 'Unbounded', sans-serif; font-size: 42px; font-weight: 900;
+  color: var(--white); line-height: 1; letter-spacing: -2px;
 }
-
-.total-steps-goal {
-  font-size: 14px;
-  color: rgba(255,255,255,0.6);
-  margin-top: 4px;
-  margin-bottom: 20px;
-}
-
-.total-steps-goal strong { color: var(--orange-light); }
-
-/* Progress bar */
-.progress-wrap {
-  position: relative;
-  margin: 0 auto 8px;
-  max-width: 360px;
-}
-
-.progress-track {
-  height: 22px;
-  background: rgba(255,255,255,0.12);
-  border-radius: 20px;
-  overflow: hidden;
-  position: relative;
-}
-
+.total-goal { font-size: 13px; color: rgba(255,255,255,0.5); margin-top: 4px; margin-bottom: 16px; }
+.total-goal strong { color: var(--orange-light); }
+.progress-wrap { max-width: 360px; margin: 0 auto 6px; }
+.progress-track { height: 22px; background: rgba(255,255,255,0.12); border-radius: 20px; overflow: hidden; }
 .progress-fill {
-  height: 100%;
+  height: 100%; border-radius: 20px; width: 0%;
   background: linear-gradient(90deg, var(--green-light), var(--orange));
-  border-radius: 20px;
-  width: 0%;
-  transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1);
-  position: relative;
+  transition: width 1.5s cubic-bezier(0.16, 1, 0.3, 1); position: relative;
 }
-
 .progress-fill::after {
-  content: '🥾';
-  position: absolute;
-  right: -14px;
-  top: 50%;
-  transform: translateY(-50%);
-  font-size: 22px;
+  content: '🥾'; position: absolute; right: -14px; top: 50%;
+  transform: translateY(-50%); font-size: 20px;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
-  animation: bounce 1s ease-in-out infinite alternate;
+  animation: bootBounce 1s ease-in-out infinite alternate;
 }
-
-@keyframes bounce {
-  from { transform: translateY(-50%) translateX(0); }
-  to { transform: translateY(-60%) translateX(2px); }
-}
-
+@keyframes bootBounce { to { transform: translateY(-65%); } }
 .progress-pct {
-  font-family: 'Unbounded', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--orange-light);
-  margin-top: 10px;
+  font-family: 'Unbounded', sans-serif; font-size: 13px; font-weight: 700;
+  color: var(--orange-light); margin-top: 8px;
 }
-
 .remaining-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
-  border-radius: 30px;
-  padding: 8px 16px;
-  font-size: 13px;
-  font-weight: 700;
-  margin-top: 14px;
-  color: var(--cream);
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 30px; padding: 7px 14px;
+  font-size: 12px; font-weight: 700; margin-top: 12px; color: #fdf6ec;
 }
+.remaining-badge .num { color: var(--orange-light); font-family: 'Unbounded', sans-serif; font-size: 14px; }
 
-.remaining-badge .num { color: var(--orange-light); font-family: 'Unbounded', sans-serif; font-size: 16px; }
-
-/* ===== ROUTE MAP ===== */
-.section {
-  padding: 20px 20px 0;
+/* STATS */
+.stats-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 16px 20px 0; }
+.stat-card {
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 16px; padding: 14px; text-align: center;
 }
+.stat-icon { font-size: 20px; margin-bottom: 4px; }
+.stat-num { font-family: 'Unbounded', sans-serif; font-size: 18px; font-weight: 700; line-height: 1; }
+.stat-label { font-size: 11px; color: rgba(255,255,255,0.5); font-weight: 600; margin-top: 3px; line-height: 1.3; }
 
-.section-title {
-  font-family: 'Unbounded', sans-serif;
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--white);
-  margin-bottom: 14px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
+/* SECTION */
+.section { padding: 16px 20px 0; }
+.section-title { font-family: 'Unbounded', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 12px; }
 
+/* ROUTE */
 .route-card {
-  background: linear-gradient(135deg, #2d6a4f 0%, #1e5038 100%);
-  border-radius: 20px;
-  padding: 20px 16px 24px;
+  background: linear-gradient(135deg, #2d6a4f, #1e5038);
+  border-radius: 20px; padding: 18px 16px 22px;
   border: 1px solid rgba(82,183,136,0.3);
-  position: relative;
-  overflow: hidden;
 }
-
-.route-card::after {
-  content: '';
-  position: absolute;
-  bottom: 0; right: 0;
-  width: 120px; height: 80px;
-  background: radial-gradient(ellipse at bottom right, rgba(244,115,42,0.15), transparent);
-  pointer-events: none;
-}
-
-/* Waypoints on the route */
-.route-path {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  position: relative;
-}
-
-.waypoint {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  position: relative;
-}
-
+.waypoint { display: flex; align-items: flex-start; gap: 12px; position: relative; }
 .waypoint:not(:last-child)::before {
-  content: '';
-  position: absolute;
-  left: 18px;
-  top: 40px;
-  bottom: 0;
-  width: 3px;
-  background: linear-gradient(to bottom, var(--green-light), rgba(82,183,136,0.3));
-  z-index: 0;
+  content: ''; position: absolute; left: 18px; top: 40px; bottom: 0;
+  width: 3px; background: linear-gradient(to bottom, var(--green-light), rgba(82,183,136,0.2)); z-index: 0;
 }
-
-.waypoint.done:not(:last-child)::before {
-  background: linear-gradient(to bottom, var(--orange-light), var(--green-light));
-}
-
+.waypoint.done:not(:last-child)::before { background: linear-gradient(to bottom, var(--orange-light), var(--green-light)); }
 .wp-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  flex-shrink: 0;
-  position: relative;
-  z-index: 1;
-  border: 3px solid transparent;
+  width: 38px; height: 38px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px; flex-shrink: 0; position: relative; z-index: 1; border: 3px solid transparent;
 }
-
-.waypoint.done .wp-icon {
-  background: linear-gradient(135deg, var(--orange), var(--orange-light));
-  border-color: rgba(255,255,255,0.3);
-}
-
-.waypoint.current .wp-icon {
-  background: linear-gradient(135deg, var(--green-light), var(--green-mid));
-  border-color: var(--orange-light);
-  box-shadow: 0 0 0 4px rgba(244,115,42,0.3);
-  animation: pulse-wp 2s ease-in-out infinite;
-}
-
-.waypoint.locked .wp-icon {
-  background: rgba(255,255,255,0.1);
-  border-color: rgba(255,255,255,0.15);
-  opacity: 0.5;
-}
-
-@keyframes pulse-wp {
-  0%, 100% { box-shadow: 0 0 0 4px rgba(244,115,42,0.3); }
-  50% { box-shadow: 0 0 0 8px rgba(244,115,42,0.1); }
-}
-
-.wp-info {
-  padding: 8px 0 20px;
-}
-
-.wp-name {
-  font-weight: 800;
-  font-size: 15px;
-  color: var(--white);
-}
-
-.waypoint.locked .wp-name { color: rgba(255,255,255,0.4); }
-
-.wp-steps {
-  font-size: 12px;
-  color: var(--green-light);
-  margin-top: 2px;
-  font-weight: 600;
-}
-
+.waypoint.done .wp-icon { background: linear-gradient(135deg, var(--orange), var(--orange-light)); border-color: rgba(255,255,255,0.3); }
+.waypoint.current .wp-icon { background: linear-gradient(135deg, var(--green-light), var(--green-mid)); border-color: var(--orange-light); animation: pulseWp 2s ease-in-out infinite; }
+.waypoint.locked .wp-icon { background: rgba(255,255,255,0.08); border-color: rgba(255,255,255,0.1); opacity: 0.5; }
+@keyframes pulseWp { 0%,100% { box-shadow: 0 0 0 4px rgba(244,115,42,0.3); } 50% { box-shadow: 0 0 0 8px rgba(244,115,42,0.1); } }
+.wp-info { padding: 6px 0 18px; }
+.wp-name { font-weight: 800; font-size: 14px; }
+.waypoint.locked .wp-name { color: rgba(255,255,255,0.3); }
+.wp-steps { font-size: 12px; color: var(--green-light); margin-top: 2px; font-weight: 600; }
 .waypoint.done .wp-steps { color: var(--orange-light); }
-.waypoint.locked .wp-steps { color: rgba(255,255,255,0.3); }
-
+.waypoint.locked .wp-steps { color: rgba(255,255,255,0.2); }
 .wp-badge {
-  display: inline-block;
-  background: rgba(244,115,42,0.2);
-  color: var(--orange-light);
-  font-size: 10px;
-  font-weight: 800;
-  padding: 2px 8px;
-  border-radius: 10px;
-  margin-top: 4px;
-  border: 1px solid rgba(244,115,42,0.3);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  display: inline-block; background: rgba(244,115,42,0.2); color: var(--orange-light);
+  font-size: 10px; font-weight: 800; padding: 2px 8px; border-radius: 10px; margin-top: 4px;
+  border: 1px solid rgba(244,115,42,0.3); text-transform: uppercase; letter-spacing: 0.5px;
 }
+.wp-badge.done-badge { background: rgba(82,183,136,0.2); color: var(--green-light); border-color: rgba(82,183,136,0.3); }
 
-.wp-badge.done-badge {
-  background: rgba(82,183,136,0.2);
-  color: var(--green-light);
-  border-color: rgba(82,183,136,0.3);
+/* ADD STEPS CARD */
+.steps-card {
+  background: var(--cream); border-radius: 20px;
+  padding: 20px; color: var(--text); margin: 16px 20px 0;
 }
-
-/* ===== MY STEPS INPUT ===== */
-.my-steps-card {
-  background: var(--cream);
-  border-radius: 20px;
-  padding: 20px;
-  color: var(--text);
-  margin: 16px 20px 0;
-}
-
-.my-steps-card .card-title {
-  font-family: 'Unbounded', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--green-dark);
-  margin-bottom: 4px;
-}
-
-.my-steps-card .card-sub {
-  font-size: 12px;
-  color: #666;
-  margin-bottom: 16px;
-}
-
-.input-tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
+.card-title { font-family: 'Unbounded', sans-serif; font-size: 13px; font-weight: 700; color: var(--green-dark); margin-bottom: 3px; }
+.card-sub { font-size: 12px; color: #777; margin-bottom: 14px; }
+.input-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
 .input-tab {
-  flex: 1;
-  padding: 8px 4px;
-  border-radius: 12px;
-  border: 2px solid transparent;
-  background: rgba(45,106,79,0.1);
-  color: var(--green-mid);
-  font-family: 'Nunito', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-  text-align: center;
-  transition: all 0.2s;
+  flex: 1; padding: 8px 4px; border-radius: 12px; border: 2px solid transparent;
+  background: rgba(45,106,79,0.1); color: var(--green-mid);
+  font-family: 'Nunito', sans-serif; font-size: 12px; font-weight: 700;
+  cursor: pointer; text-align: center; transition: all 0.2s;
 }
-
-.input-tab.active {
-  background: var(--green-mid);
-  color: white;
-  border-color: var(--green-mid);
-}
-
+.input-tab.active { background: var(--green-mid); color: white; border-color: var(--green-mid); }
 .input-panel { display: none; }
 .input-panel.active { display: block; }
-
-.input-group {
-  margin-bottom: 12px;
+.field-label { display: block; font-size: 12px; font-weight: 700; color: #555; margin-bottom: 5px; }
+.field-input {
+  width: 100%; padding: 11px 14px; border-radius: 12px; border: 2px solid #e0e0e0;
+  font-family: 'Nunito', sans-serif; font-size: 16px; font-weight: 700;
+  color: var(--text); background: white; transition: border 0.2s; -webkit-appearance: none;
 }
+.field-input:focus { outline: none; border-color: var(--green-mid); }
+.field-wrap { margin-bottom: 10px; }
+.walk-row { display: flex; gap: 8px; align-items: center; }
+.walk-row .field-wrap { flex: 1; margin-bottom: 0; }
+.walk-unit { font-size: 13px; font-weight: 700; color: #888; flex-shrink: 0; }
 
-.input-group label {
-  display: block;
-  font-size: 12px;
-  font-weight: 700;
-  color: #555;
-  margin-bottom: 6px;
+/* Workout grid */
+.workout-section-label { font-size: 12px; font-weight: 700; color: #555; margin-bottom: 8px; margin-top: 12px; }
+.workout-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+.workout-day {
+  background: white; border-radius: 12px; padding: 10px 12px;
+  border: 2px solid #e8e8e8; transition: border 0.2s;
 }
-
-.input-group input, .input-group select {
-  width: 100%;
-  padding: 12px 14px;
-  border-radius: 12px;
-  border: 2px solid #e0e0e0;
-  font-family: 'Nunito', sans-serif;
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--text);
-  background: white;
-  transition: border 0.2s;
-  -webkit-appearance: none;
+.workout-day.completed { border-color: var(--green-mid); background: #f0faf4; }
+.workout-day-label { font-size: 11px; font-weight: 700; color: #999; margin-bottom: 3px; }
+.workout-day.completed .workout-day-label { color: var(--green-mid); }
+.workout-day-steps { font-size: 12px; font-weight: 700; color: #bbb; }
+.workout-day.completed .workout-day-steps { color: var(--green-dark); }
+.workout-checkbox-row { display: flex; align-items: center; gap: 6px; margin-top: 6px; }
+.workout-checkbox {
+  width: 18px; height: 18px; border-radius: 5px; border: 2px solid #ccc;
+  background: white; cursor: pointer; appearance: none; -webkit-appearance: none;
+  transition: all 0.2s; flex-shrink: 0; position: relative;
 }
+.workout-checkbox:checked { background: var(--green-mid); border-color: var(--green-mid); }
+.workout-checkbox:checked::after { content: '✓'; position: absolute; top: -1px; left: 2px; color: white; font-size: 12px; font-weight: 700; }
+.workout-check-label { font-size: 12px; font-weight: 600; color: #777; }
 
-.input-group input:focus, .input-group select:focus {
-  outline: none;
-  border-color: var(--green-mid);
+.calc-preview {
+  background: #f0faf4; border-radius: 10px; padding: 9px 12px;
+  margin-bottom: 10px; border: 1px solid #c8ecd4;
+  font-size: 12px; color: var(--green-mid); font-weight: 700; display: none;
 }
+.calc-preview.show { display: block; }
 
-.workout-row {
-  display: flex;
-  gap: 8px;
-  align-items: flex-end;
-}
-
-.workout-row .input-group { flex: 1; margin-bottom: 0; }
-
-.btn-add {
-  background: var(--green-mid);
-  color: white;
-  border: none;
-  border-radius: 12px;
-  padding: 12px 16px;
-  font-family: 'Nunito', sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.2s;
-  flex-shrink: 0;
-}
-
-.btn-add:hover { background: var(--green-dark); }
-
-.coeff-hint {
-  font-size: 11px;
-  color: #888;
-  margin-top: 8px;
-  line-height: 1.4;
-  background: #f5f5f5;
-  padding: 8px 10px;
-  border-radius: 8px;
-}
-
-.btn-submit {
-  width: 100%;
-  padding: 15px;
+/* BUTTONS */
+.btn-main {
+  width: 100%; padding: 14px;
   background: linear-gradient(135deg, var(--orange), var(--orange-light));
-  color: white;
-  border: none;
-  border-radius: 14px;
-  font-family: 'Unbounded', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  margin-top: 4px;
+  color: white; border: none; border-radius: 14px;
+  font-family: 'Unbounded', sans-serif; font-size: 13px; font-weight: 700;
+  cursor: pointer; box-shadow: 0 4px 15px rgba(244,115,42,0.35);
   transition: transform 0.15s, box-shadow 0.15s;
-  box-shadow: 0 4px 15px rgba(244,115,42,0.35);
 }
+.btn-main:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(244,115,42,0.45); }
+.btn-main:active { transform: translateY(0); }
+.btn-main:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-.btn-submit:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(244,115,42,0.45);
+/* PRIZE */
+.prize-banner {
+  margin: 16px 20px 0;
+  background: linear-gradient(135deg, #5a3520, #7a4a2e);
+  border-radius: 20px; padding: 16px 18px;
+  display: flex; align-items: center; gap: 14px;
+  border: 1px solid rgba(255,200,100,0.2);
 }
+.prize-icon { font-size: 34px; flex-shrink: 0; }
+.prize-label { font-size: 10px; color: rgba(255,235,180,0.6); font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+.prize-title { font-family: 'Unbounded', sans-serif; font-size: 13px; font-weight: 700; color: #ffe8b0; line-height: 1.3; margin-top: 2px; }
+.prize-sub { font-size: 11px; color: rgba(255,220,150,0.65); margin-top: 3px; }
 
-.btn-submit:active { transform: translateY(0); }
-
-/* ===== MY STATS ===== */
-.stats-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  padding: 16px 20px 0;
-}
-
-.stat-card {
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.12);
-  border-radius: 16px;
-  padding: 14px;
-  text-align: center;
-}
-
-.stat-icon { font-size: 22px; margin-bottom: 4px; }
-.stat-num {
-  font-family: 'Unbounded', sans-serif;
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--white);
-  line-height: 1;
-}
-
-.stat-label {
-  font-size: 11px;
-  color: rgba(255,255,255,0.55);
-  font-weight: 600;
-  margin-top: 2px;
-  line-height: 1.3;
-}
-
-/* ===== LEADERBOARD ===== */
+/* LEADERBOARD */
 .leaderboard-card {
   background: linear-gradient(135deg, #1e5038, #163d2a);
-  border-radius: 20px;
-  padding: 18px 16px;
+  border-radius: 20px; padding: 16px;
   border: 1px solid rgba(82,183,136,0.2);
   margin: 16px 20px 0;
 }
-
-.leaderboard-card .card-title {
-  font-family: 'Unbounded', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--white);
-  margin-bottom: 14px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.leader-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 10px;
-  border-radius: 12px;
-  margin-bottom: 6px;
-  transition: background 0.2s;
-}
-
-.leader-row.me {
-  background: rgba(244,115,42,0.15);
-  border: 1px solid rgba(244,115,42,0.3);
-}
-
-.leader-pos {
-  font-family: 'Unbounded', sans-serif;
-  font-size: 13px;
-  font-weight: 700;
-  width: 28px;
-  text-align: center;
-  color: rgba(255,255,255,0.5);
-}
-
-.leader-row:nth-child(1) .leader-pos { color: #ffd700; font-size: 16px; }
-.leader-row:nth-child(2) .leader-pos { color: #c0c0c0; }
-.leader-row:nth-child(3) .leader-pos { color: #cd7f32; }
-
-.leader-avatar {
-  width: 32px; height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--green-mid), var(--green-light));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  flex-shrink: 0;
-}
-
-.leader-name {
-  flex: 1;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--white);
-}
-
-.leader-steps {
-  font-family: 'Unbounded', sans-serif;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--green-light);
-}
-
-.leader-row.me .leader-name,
+.leaderboard-card .card-title { font-family: 'Unbounded', sans-serif; font-size: 13px; font-weight: 700; margin-bottom: 12px; }
+.leader-row { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 12px; margin-bottom: 3px; }
+.leader-row.me { background: rgba(244,115,42,0.15); border: 1px solid rgba(244,115,42,0.3); }
+.leader-pos { font-family: 'Unbounded', sans-serif; font-size: 12px; font-weight: 700; width: 26px; text-align: center; color: rgba(255,255,255,0.4); }
+.pos-1 { color: #ffd700 !important; font-size: 16px !important; }
+.pos-2 { color: #c0c0c0 !important; }
+.pos-3 { color: #cd7f32 !important; }
+.leader-avatar { width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, var(--green-mid), var(--green-light)); display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; }
+.leader-name { flex: 1; font-size: 13px; font-weight: 700; }
+.leader-row.me .leader-name { color: var(--orange-light); }
+.leader-steps { font-family: 'Unbounded', sans-serif; font-size: 11px; font-weight: 700; color: var(--green-light); }
 .leader-row.me .leader-steps { color: var(--orange-light); }
 
-/* ===== PRIZE BANNER ===== */
-.prize-banner {
-  margin: 16px 20px 0;
-  background: linear-gradient(135deg, #6b4226, #8a5a3a);
-  border-radius: 20px;
-  padding: 18px 20px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  border: 1px solid rgba(255,200,100,0.3);
-  position: relative;
-  overflow: hidden;
+/* ADMIN */
+.admin-toggle {
+  margin: 16px 20px 0; background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08); border-radius: 14px;
+  padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer;
 }
-
-.prize-banner::before {
-  content: '✨';
-  position: absolute;
-  right: 14px; top: 10px;
-  font-size: 24px;
-  opacity: 0.4;
-  animation: sparkle 2s ease-in-out infinite;
+.admin-toggle-label { font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.45); }
+.admin-toggle-icon { font-size: 14px; transition: transform 0.3s; color: rgba(255,255,255,0.4); }
+.admin-toggle.open .admin-toggle-icon { transform: rotate(180deg); }
+.admin-panel {
+  display: none; margin: 0 20px;
+  background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+  border-top: none; border-radius: 0 0 14px 14px; padding: 16px;
 }
-
-@keyframes sparkle {
-  0%,100% { opacity: 0.3; transform: scale(1); }
-  50% { opacity: 0.7; transform: scale(1.2); }
+.admin-panel.open { display: block; }
+.admin-title { font-family: 'Unbounded', sans-serif; font-size: 12px; font-weight: 700; color: var(--orange-light); margin-bottom: 12px; }
+.admin-row { display: flex; gap: 8px; align-items: flex-end; margin-bottom: 10px; }
+.admin-row .field-wrap { flex: 1; margin-bottom: 0; }
+.admin-field {
+  width: 100%; padding: 10px 12px; border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.15);
+  background: rgba(255,255,255,0.07); color: white;
+  font-family: 'Nunito', sans-serif; font-size: 15px; font-weight: 700;
+  -webkit-appearance: none;
 }
-
-.prize-icon { font-size: 36px; flex-shrink: 0; }
-
-.prize-text .prize-label {
-  font-size: 11px;
-  color: rgba(255,235,180,0.7);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+.admin-field::placeholder { color: rgba(255,255,255,0.25); font-weight: 400; }
+.admin-field:focus { outline: none; border-color: var(--orange-light); }
+.admin-field-label { display: block; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.5); margin-bottom: 5px; }
+.btn-admin {
+  padding: 10px 14px; background: var(--orange); color: white;
+  border: none; border-radius: 12px;
+  font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700;
+  cursor: pointer; flex-shrink: 0; transition: background 0.2s;
 }
+.btn-admin:hover { background: var(--orange-light); }
 
-.prize-text .prize-title {
-  font-family: 'Unbounded', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  color: #ffe8b0;
-  line-height: 1.3;
-  margin-top: 2px;
-}
-
-.prize-text .prize-sub {
-  font-size: 12px;
-  color: rgba(255,220,150,0.75);
-  margin-top: 3px;
-}
-
-/* ===== BOTTOM NAV SPACER ===== */
-.bottom-space { height: 40px; }
-
-/* ===== SUCCESS TOAST ===== */
+/* TOAST */
 .toast {
-  position: fixed;
-  bottom: 30px;
-  left: 50%;
+  position: fixed; bottom: 20px; left: 50%;
   transform: translateX(-50%) translateY(80px);
-  background: var(--green-mid);
-  color: white;
-  font-family: 'Nunito', sans-serif;
-  font-size: 14px;
-  font-weight: 700;
-  padding: 12px 24px;
-  border-radius: 30px;
+  background: var(--green-mid); color: white;
+  font-family: 'Nunito', sans-serif; font-size: 13px; font-weight: 700;
+  padding: 11px 22px; border-radius: 30px;
   box-shadow: 0 4px 20px rgba(0,0,0,0.3);
   transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  z-index: 999;
-  white-space: nowrap;
+  z-index: 999; text-align: center; max-width: 90vw;
 }
-
 .toast.show { transform: translateX(-50%) translateY(0); }
-
+.toast.error { background: #b03020; }
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
-<div class="header">
-  <div class="logo">ШАГАЙ <span>⚡</span> ДОМА</div>
-  <div class="subtitle-tag">🏕️ Виртуальный поход</div>
+<div id="loadingScreen">
+  <div class="loading-icon">🏕️</div>
+  <div class="loading-text">Загружаем поход...</div>
 </div>
 
-<!-- PROGRESS HERO -->
-<div class="progress-hero">
-  <div class="total-steps-label">Шагов всей командой</div>
-  <div class="total-steps-count" id="totalDisplay">0</div>
-  <div class="total-steps-goal">из <strong>1 000 000</strong> до финала</div>
+<div id="loginScreen">
+  <div class="login-logo">ШАГАЙ <span>⚡</span> ДОМА</div>
+  <div style="font-size:12px;color:rgba(255,255,255,0.45);margin-bottom:4px;">🏕️ Виртуальный поход · 5 дней</div>
+  <div class="login-card">
+    <div class="login-title">Привет, шагательница! 👋</div>
+    <div class="login-sub">Введи своё имя или никнейм, чтобы присоединиться к походу и отслеживать шаги</div>
+    <input class="login-input" id="nameInput" type="text" placeholder="Твоё имя или никнейм" maxlength="30"
+      onkeydown="if(event.key==='Enter')handleLogin()">
+    <button class="btn-main" onclick="handleLogin()">Вперёд в поход! 🥾</button>
+  </div>
+</div>
 
-  <div class="progress-wrap">
-    <div class="progress-track">
-      <div class="progress-fill" id="progressFill"></div>
+<div id="mainApp">
+  <div class="topbar">
+    <div class="topbar-logo">ШАГАЙ <span>⚡</span> ДОМА</div>
+    <div class="topbar-user" onclick="handleLogout()" title="Выйти">
+      <div class="user-avatar" id="userAvatar">🏕️</div>
+      <span id="topbarName"></span>
     </div>
   </div>
-  <div class="progress-pct" id="progressPct">0%</div>
 
-  <div class="remaining-badge">
-    ⛰️ До цели: <span class="num" id="remainingDisplay">1 000 000</span> шагов
-  </div>
-</div>
-
-<!-- STATS ROW -->
-<div class="stats-row">
-  <div class="stat-card">
-    <div class="stat-icon">👟</div>
-    <div class="stat-num" id="myStepsDisplay">0</div>
-    <div class="stat-label">Мои шаги</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-icon">🏅</div>
-    <div class="stat-num" id="myRankDisplay">—</div>
-    <div class="stat-label">Место в рейтинге</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-icon">📅</div>
-    <div class="stat-num" id="daysDisplay">5</div>
-    <div class="stat-label">Дней в походе</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-icon">🎯</div>
-    <div class="stat-num" id="myPctDisplay">0%</div>
-    <div class="stat-label">Мой вклад</div>
-  </div>
-</div>
-
-<!-- ROUTE MAP -->
-<div class="section" style="margin-top:16px;">
-  <div class="section-title">🗺️ Маршрут похода</div>
-  <div class="route-card">
-    <div class="route-path" id="routePath">
-      <!-- filled by JS -->
-    </div>
-  </div>
-</div>
-
-<!-- MY STEPS INPUT -->
-<div class="my-steps-card">
-  <div class="card-title">➕ Добавить шаги</div>
-  <div class="card-sub">Внеси сегодняшнюю активность</div>
-
-  <div class="input-tabs">
-    <button class="input-tab active" onclick="switchTab('bracelet')">⌚ Браслет</button>
-    <button class="input-tab" onclick="switchTab('manual')">🏃 Без браслета</button>
-  </div>
-
-  <!-- BRACELET -->
-  <div class="input-panel active" id="panel-bracelet">
-    <div class="input-group">
-      <label>Количество шагов за день</label>
-      <input type="number" id="braceletSteps" placeholder="например, 8500" inputmode="numeric">
-    </div>
-    <button class="btn-submit" onclick="addStepsBracelet()">Засчитать шаги 👟</button>
-  </div>
-
-  <!-- MANUAL -->
-  <div class="input-panel" id="panel-manual">
-    <div class="workout-row">
-      <div class="input-group">
-        <label>Тренировка</label>
-        <select id="workoutType">
-          <option value="walk15">🚶 Ходьба 15 мин</option>
-          <option value="walk30">🚶 Ходьба 30 мин</option>
-          <option value="walk60">🚶 Ходьба 60 мин</option>
-          <option value="cardio15">💃 Кардио 15 мин</option>
-          <option value="cardio30">💃 Кардио 30 мин</option>
-          <option value="cardio45">💪 Интенсив 45 мин</option>
-        </select>
+  <div class="progress-hero">
+    <div class="total-label">Шагов всей командой</div>
+    <div class="total-count" id="totalDisplay">0</div>
+    <div class="total-goal">из <strong>1 000 000</strong> — цель похода</div>
+    <div class="progress-wrap">
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
       </div>
-      <button class="btn-add" onclick="addWorkout()">+</button>
+    </div>
+    <div class="progress-pct" id="progressPct">0%</div>
+    <div class="remaining-badge">
+      ⛰️ До цели: <span class="num" id="remainingDisplay">1&nbsp;000&nbsp;000</span> шагов
+    </div>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-icon">👟</div>
+      <div class="stat-num" id="myStepsDisplay">0</div>
+      <div class="stat-label">Мои шаги</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🏅</div>
+      <div class="stat-num" id="myRankDisplay">—</div>
+      <div class="stat-label">Место в рейтинге</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">👯</div>
+      <div class="stat-num" id="participantsDisplay">0</div>
+      <div class="stat-label">Участниц в походе</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">🎯</div>
+      <div class="stat-num" id="myPctDisplay">0%</div>
+      <div class="stat-label">Мой вклад</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">🗺️ Маршрут похода</div>
+    <div class="route-card">
+      <div id="routePath"></div>
+    </div>
+  </div>
+
+  <!-- ADD STEPS -->
+  <div class="steps-card">
+    <div class="card-title">➕ Добавить шаги</div>
+    <div class="card-sub">Внеси свою активность за день</div>
+    <div class="input-tabs">
+      <button class="input-tab active" onclick="switchTab('bracelet',this)">⌚ С браслетом</button>
+      <button class="input-tab" onclick="switchTab('manual',this)">🏃 Без браслета</button>
     </div>
 
-    <div class="input-group" style="margin-top:10px;">
-      <label>Дополнительная прогулка (минут)</label>
-      <input type="number" id="walkMinutes" placeholder="0" inputmode="numeric">
+    <div class="input-panel active" id="panel-bracelet">
+      <div class="field-wrap">
+        <label class="field-label">Шагов сегодня (с браслета)</label>
+        <input class="field-input" type="number" id="braceletSteps" placeholder="например, 8500"
+          inputmode="numeric" oninput="updateBraceletPreview()">
+      </div>
+      <div class="calc-preview" id="braceletPreview"></div>
+      <button class="btn-main" id="btnBracelet" onclick="addStepsBracelet()">Засчитать шаги 👟</button>
     </div>
 
-    <div class="coeff-hint">
-      💡 Шаги рассчитываются автоматически: ходьба ≈ 100 шагов/мин, кардио ≈ 120 шагов/мин, интенсив ≈ 150 шагов/мин
+    <div class="input-panel" id="panel-manual">
+      <div class="field-wrap">
+        <label class="field-label">🚶 Прогулка на улице</label>
+        <div class="walk-row">
+          <div class="field-wrap">
+            <input class="field-input" type="number" id="walkMins" placeholder="0"
+              inputmode="numeric" oninput="updateManualPreview()">
+          </div>
+          <span class="walk-unit">мин</span>
+        </div>
+      </div>
+      <div class="workout-section-label">💃 Тренировки — отметь выполненные</div>
+      <div class="workout-grid" id="workoutGrid"></div>
+      <div class="calc-preview" id="manualPreview"></div>
+      <button class="btn-main" id="btnManual" onclick="addStepsManual()">Засчитать шаги 🥾</button>
     </div>
+  </div>
 
-    <button class="btn-submit" onclick="addStepsManual()">Засчитать шаги 🥾</button>
+  <div class="prize-banner">
+    <div class="prize-icon">🏆</div>
+    <div>
+      <div class="prize-label">Главный приз</div>
+      <div class="prize-title">Пройдём миллион вместе —<br>все получат сюрприз!</div>
+      <div class="prize-sub">Каждый шаг приближает к цели 💪</div>
+    </div>
+  </div>
+
+  <div class="leaderboard-card">
+    <div class="card-title">🏅 Топ шагательниц</div>
+    <div id="leaderboard"></div>
+  </div>
+
+  <div class="admin-toggle" id="adminToggle" onclick="toggleAdmin()">
+    <span class="admin-toggle-label">⚙️ Панель администратора</span>
+    <span class="admin-toggle-icon">▼</span>
+  </div>
+  <div class="admin-panel" id="adminPanel">
+    <div id="adminContent"></div>
   </div>
 </div>
 
-<!-- PRIZE BANNER -->
-<div class="prize-banner">
-  <div class="prize-icon">🏆</div>
-  <div class="prize-text">
-    <div class="prize-label">Главный приз</div>
-    <div class="prize-title">Если пройдём миллион —<br>все получат сюрприз!</div>
-    <div class="prize-sub">Осталось совсем чуть-чуть 💪</div>
-  </div>
-</div>
-
-<!-- LEADERBOARD -->
-<div class="leaderboard-card">
-  <div class="card-title">🏅 Топ шагателей</div>
-  <div id="leaderboard">
-    <!-- filled by JS -->
-  </div>
-</div>
-
-<div class="bottom-space"></div>
-
-<!-- TOAST -->
 <div class="toast" id="toast"></div>
 
-<script>
-// ===== STATE =====
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc, onSnapshot,
+         collection, query, orderBy, increment, serverTimestamp }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ─── CONFIG ────────────────────────────────────────────────────
+const FB = {
+  apiKey: "AIzaSyApSUQxealmL13siDzauRWO_J6-fSHkN-4",
+  authDomain: "walk-walk-d8a14.firebaseapp.com",
+  projectId: "walk-walk-d8a14",
+  storageBucket: "walk-walk-d8a14.firebasestorage.app",
+  messagingSenderId: "1022340791272",
+  appId: "1:1022340791272:web:d4009903a21ffdb0dac25d"
+};
+
+// ─── ОБНОВИТЬ: длительность тренировок в минутах ───────────────
+// spm = шагов в минуту (шагательная тренировка ≈ 110)
+const WORKOUT_DAYS = [
+  { day: 1, label: "День 1", mins: 15, spm: 110 },
+  { day: 2, label: "День 2", mins: 15, spm: 110 },
+  { day: 3, label: "День 3", mins: 15, spm: 110 },
+  { day: 4, label: "День 4", mins: 15, spm: 110 },
+  { day: 5, label: "День 5", mins: 15, spm: 110 },
+];
+const WALK_SPM = 100;
 const GOAL = 1_000_000;
+const ADMIN_PASSWORD = "admin2025"; // сменить при желании
 
-// Demo data — в реальном проекте заменить на Firebase/API
-const state = {
-  totalSteps: 634200,
-  mySteps: 0,
-  pendingWorkouts: []
-};
-
-const WORKOUT_COEFF = {
-  walk15: { mins: 15, spm: 100 },
-  walk30: { mins: 30, spm: 100 },
-  walk60: { mins: 60, spm: 100 },
-  cardio15: { mins: 15, spm: 120 },
-  cardio30: { mins: 30, spm: 120 },
-  cardio45: { mins: 45, spm: 150 },
-};
-
-// Route waypoints
 const WAYPOINTS = [
-  { emoji: '🏕️', name: 'Старт: Лагерь у реки', steps: 0, end: 150000 },
-  { emoji: '🌲', name: 'Сосновый лес', steps: 150000, end: 300000 },
-  { emoji: '⛰️', name: 'Горный перевал', steps: 300000, end: 500000 },
-  { emoji: '🦅', name: 'Орлиная скала', steps: 500000, end: 650000 },
-  { emoji: '🏞️', name: 'Долина водопадов', steps: 650000, end: 800000 },
-  { emoji: '🌸', name: 'Альпийский луг', steps: 800000, end: 950000 },
-  { emoji: '🎉', name: 'Вершина! Финал', steps: 950000, end: 1000000 },
+  { emoji: "🏕️", name: "Старт: Лагерь у реки",   from: 0,      to: 150000  },
+  { emoji: "🌲", name: "Сосновый лес",             from: 150000, to: 300000  },
+  { emoji: "⛰️", name: "Горный перевал",           from: 300000, to: 500000  },
+  { emoji: "🦅", name: "Орлиная скала",            from: 500000, to: 650000  },
+  { emoji: "🏞️", name: "Долина водопадов",         from: 650000, to: 800000  },
+  { emoji: "🌸", name: "Альпийский луг",           from: 800000, to: 950000  },
+  { emoji: "🎉", name: "Вершина! Финал",           from: 950000, to: 1000000 },
 ];
 
-const DEMO_LEADERS = [
-  { name: 'Марина К.', steps: 42300, avatar: '🏃' },
-  { name: 'Светлана П.', steps: 38100, avatar: '💃' },
-  { name: 'Ольга Н.', steps: 35800, avatar: '🚶' },
-  { name: 'Вы', steps: 0, avatar: '⭐', isMe: true },
-  { name: 'Татьяна В.', steps: 28900, avatar: '🌟' },
-  { name: 'Ирина М.', steps: 21500, avatar: '🦋' },
-];
+// ─── INIT ──────────────────────────────────────────────────────
+const app = initializeApp(FB);
+const db  = getFirestore(app);
 
-// ===== INIT =====
+let currentUser = null;
+let myData      = { totalSteps: 0 };
+let teamTotal   = 0;
+let allUsers    = [];
+let adminOK     = false;
+let currentTab  = "bracelet";
+let unsubTeam, unsubUsers;
+
+const $ = id => document.getElementById(id);
+
+function fmt(n) { return Math.round(n).toLocaleString("ru-RU").replace(/,/g, "\u00a0"); }
+
+function toast(msg, err = false) {
+  const t = $("toast");
+  t.textContent = msg;
+  t.className = "toast" + (err ? " error" : "");
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3500);
+}
+
+function emojiFor(name) {
+  const pool = ["🏃","💃","🚶","🌟","⭐","🦋","🌺","🎯","🏆","💪","🌻","🦄"];
+  let h = 0; for (const c of name) h = (h * 31 + c.charCodeAt(0)) % pool.length;
+  return pool[Math.abs(h)];
+}
+
+function nameToId(name) {
+  return name.trim().toLowerCase()
+    .replace(/\s+/g, "_")
+    .replace(/[^a-zа-яёa-z0-9_]/gi, "")
+    .slice(0, 40) || null;
+}
+
+// ─── AUTH ──────────────────────────────────────────────────────
 function init() {
-  setTimeout(() => {
-    updateUI();
-    renderRoute();
-    renderLeaderboard();
-  }, 300);
-}
-
-function updateUI() {
-  const total = state.totalSteps + state.mySteps;
-  const pct = Math.min(100, (total / GOAL) * 100);
-  const remaining = Math.max(0, GOAL - total);
-
-  // animate numbers
-  animateNum('totalDisplay', total, formatNum);
-  animateNum('remainingDisplay', remaining, formatNum);
-
-  document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('progressPct').textContent = pct.toFixed(1) + '%';
-  document.getElementById('myStepsDisplay').textContent = formatNum(state.mySteps);
-  document.getElementById('myPctDisplay').textContent = state.mySteps > 0
-    ? ((state.mySteps / GOAL) * 100).toFixed(2) + '%' : '0%';
-}
-
-function animateNum(id, target, formatter) {
-  const el = document.getElementById(id);
-  const start = parseInt(el.textContent.replace(/\s/g, '')) || 0;
-  const duration = 1200;
-  const startTime = performance.now();
-  function step(now) {
-    const p = Math.min(1, (now - startTime) / duration);
-    const ease = 1 - Math.pow(1 - p, 4);
-    const val = Math.round(start + (target - start) * ease);
-    el.textContent = formatter(val);
-    if (p < 1) requestAnimationFrame(step);
+  const saved = localStorage.getItem("pokhod_user");
+  if (saved) {
+    try { currentUser = JSON.parse(saved); startApp(); return; } catch {}
   }
-  requestAnimationFrame(step);
+  $("loadingScreen").style.display = "none";
+  $("loginScreen").classList.add("active");
 }
 
-function formatNum(n) {
-  return n.toLocaleString('ru-RU').replace(/,/g, ' ');
+window.handleLogin = async () => {
+  const name = $("nameInput").value.trim();
+  if (name.length < 2) { toast("Введи имя (минимум 2 символа)", true); return; }
+  const id = nameToId(name);
+  if (!id) { toast("Имя содержит недопустимые символы", true); return; }
+  currentUser = { name, id };
+  localStorage.setItem("pokhod_user", JSON.stringify(currentUser));
+  const ref = doc(db, "pokhod_users", id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) await setDoc(ref, { name, totalSteps: 0, createdAt: serverTimestamp() });
+  startApp();
+};
+
+window.handleLogout = () => {
+  if (!confirm("Выйти? Твои шаги сохранятся.")) return;
+  localStorage.removeItem("pokhod_user");
+  if (unsubTeam) unsubTeam();
+  if (unsubUsers) unsubUsers();
+  $("mainApp").classList.remove("active");
+  $("loginScreen").classList.add("active");
+  $("nameInput").value = "";
+  currentUser = null;
+};
+
+// ─── APP ───────────────────────────────────────────────────────
+function startApp() {
+  $("loadingScreen").style.display = "none";
+  $("loginScreen").classList.remove("active");
+  $("mainApp").classList.add("active");
+  $("topbarName").textContent = currentUser.name;
+  $("userAvatar").textContent = emojiFor(currentUser.name);
+  renderWorkoutGrid();
+  renderAdminPanel();
+  subscribeData();
 }
 
+function subscribeData() {
+  // командный счётчик
+  unsubTeam = onSnapshot(doc(db, "pokhod_meta", "totals"), snap => {
+    teamTotal = snap.exists() ? (snap.data().totalSteps || 0) : 0;
+    updateHero();
+    renderRoute();
+  });
+
+  // участницы
+  const q = query(collection(db, "pokhod_users"), orderBy("totalSteps", "desc"));
+  unsubUsers = onSnapshot(q, snap => {
+    allUsers = [];
+    snap.forEach(d => allUsers.push({ id: d.id, ...d.data() }));
+    myData = allUsers.find(u => u.id === currentUser.id) || { totalSteps: 0 };
+    updateHero();
+    renderLeaderboard();
+    $("participantsDisplay").textContent = allUsers.length;
+    if (adminOK) renderAdminPanel(); // обновить счётчик в панели
+  });
+}
+
+// ─── HERO ──────────────────────────────────────────────────────
+function updateHero() {
+  const pct  = Math.min(100, (teamTotal / GOAL) * 100);
+  const rem  = Math.max(0, GOAL - teamTotal);
+  const my   = myData.totalSteps || 0;
+
+  $("totalDisplay").textContent    = fmt(teamTotal);
+  $("remainingDisplay").textContent = fmt(rem);
+  $("progressFill").style.width    = pct + "%";
+  $("progressPct").textContent     = pct.toFixed(1) + "%";
+  $("myStepsDisplay").textContent  = fmt(my);
+  $("myPctDisplay").textContent    = my > 0 ? ((my / GOAL) * 100).toFixed(2) + "%" : "0%";
+}
+
+// ─── ROUTE ─────────────────────────────────────────────────────
 function renderRoute() {
-  const total = state.totalSteps + state.mySteps;
-  const container = document.getElementById('routePath');
-  container.innerHTML = '';
-
-  WAYPOINTS.forEach((wp, i) => {
-    const isDone = total >= wp.end;
-    const isCurrent = !isDone && total >= wp.steps;
-    const isLocked = !isDone && !isCurrent;
-
-    const div = document.createElement('div');
-    div.className = 'waypoint ' + (isDone ? 'done' : isCurrent ? 'current' : 'locked');
-
-    const stepsLabel = isDone
-      ? `✓ Пройдено`
-      : isCurrent
-        ? `${formatNum(total - wp.steps)} / ${formatNum(wp.end - wp.steps)} шагов`
-        : `${formatNum(wp.end - wp.steps)} шагов`;
-
-    const badge = isDone
+  const c = $("routePath"); c.innerHTML = "";
+  WAYPOINTS.forEach(wp => {
+    const done    = teamTotal >= wp.to;
+    const current = !done && teamTotal >= wp.from;
+    const cls     = done ? "done" : current ? "current" : "locked";
+    const stepsLbl = done
+      ? "✓ Пройдено"
+      : current
+        ? `${fmt(teamTotal - wp.from)}\u00a0/\u00a0${fmt(wp.to - wp.from)}\u00a0шагов`
+        : `${fmt(wp.to - wp.from)}\u00a0шагов`;
+    const badge = done
       ? `<div class="wp-badge done-badge">✓ пройдено</div>`
-      : isCurrent
-        ? `<div class="wp-badge">📍 здесь сейчас</div>`
-        : '';
-
-    div.innerHTML = `
+      : current ? `<div class="wp-badge">📍 здесь сейчас</div>` : "";
+    const d = document.createElement("div");
+    d.className = `waypoint ${cls}`;
+    d.innerHTML = `
       <div class="wp-icon">${wp.emoji}</div>
       <div class="wp-info">
         <div class="wp-name">${wp.name}</div>
-        <div class="wp-steps">${stepsLabel}</div>
+        <div class="wp-steps">${stepsLbl}</div>
         ${badge}
-      </div>
-    `;
-    container.appendChild(div);
+      </div>`;
+    c.appendChild(d);
   });
 }
 
+// ─── LEADERBOARD ───────────────────────────────────────────────
 function renderLeaderboard() {
-  const leaders = [...DEMO_LEADERS];
-  // update my steps
-  leaders.find(l => l.isMe).steps = state.mySteps;
-  leaders.sort((a, b) => b.steps - a.steps);
+  const c = $("leaderboard"); c.innerHTML = "";
+  const top  = allUsers.slice(0, 10);
+  const myRk = allUsers.findIndex(u => u.id === currentUser.id) + 1;
+  $("myRankDisplay").textContent = myRk ? myRk + " место" : "—";
 
-  const myRank = leaders.findIndex(l => l.isMe) + 1;
-  document.getElementById('myRankDisplay').textContent = myRank + ' место';
+  ["🥇","🥈","🥉"].forEach((m, i) => {
+    if (!top[i]) return;
+    appendLeaderRow(c, top[i], i + 1, m);
+  });
+  for (let i = 3; i < top.length; i++) appendLeaderRow(c, top[i], i + 1, null);
 
-  const container = document.getElementById('leaderboard');
-  container.innerHTML = '';
+  if (myRk > 10) {
+    const sep = document.createElement("div");
+    sep.style.cssText = "text-align:center;font-size:11px;color:rgba(255,255,255,0.3);padding:4px 0";
+    sep.textContent = "· · ·";
+    c.appendChild(sep);
+    appendLeaderRow(c, myData, myRk, null);
+  }
+}
 
-  const positions = ['🥇', '🥈', '🥉'];
-  leaders.forEach((l, i) => {
-    const row = document.createElement('div');
-    row.className = 'leader-row' + (l.isMe ? ' me' : '');
-    row.innerHTML = `
-      <div class="leader-pos">${i < 3 ? positions[i] : (i + 1)}</div>
-      <div class="leader-avatar">${l.avatar}</div>
-      <div class="leader-name">${l.name}${l.isMe ? ' (вы)' : ''}</div>
-      <div class="leader-steps">${formatNum(l.steps)} шагов</div>
-    `;
-    container.appendChild(row);
+function appendLeaderRow(container, user, rank, medal) {
+  const isMe = user.id === currentUser.id;
+  const r = document.createElement("div");
+  r.className = "leader-row" + (isMe ? " me" : "");
+  const posClass = rank <= 3 ? ` pos-${rank}` : "";
+  r.innerHTML = `
+    <div class="leader-pos${posClass}">${medal || rank}</div>
+    <div class="leader-avatar">${emojiFor(user.name)}</div>
+    <div class="leader-name">${user.name}${isMe ? " (вы)" : ""}</div>
+    <div class="leader-steps">${fmt(user.totalSteps || 0)}</div>`;
+  container.appendChild(r);
+}
+
+// ─── WORKOUT GRID ──────────────────────────────────────────────
+function renderWorkoutGrid() {
+  const g = $("workoutGrid"); g.innerHTML = "";
+  WORKOUT_DAYS.forEach(wd => {
+    const steps = wd.mins * wd.spm;
+    const d = document.createElement("div");
+    d.className = "workout-day"; d.id = `wday-${wd.day}`;
+    d.innerHTML = `
+      <div class="workout-day-label">${wd.label}</div>
+      <div class="workout-day-steps">~${fmt(steps)} шагов</div>
+      <div class="workout-checkbox-row">
+        <input type="checkbox" class="workout-checkbox" id="wch-${wd.day}"
+          onchange="toggleWday(${wd.day}); updateManualPreview()">
+        <label class="workout-check-label" for="wch-${wd.day}">Выполнено</label>
+      </div>`;
+    g.appendChild(d);
   });
 }
 
-// ===== TABS =====
-function switchTab(tab) {
-  document.querySelectorAll('.input-tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.input-panel').forEach(p => p.classList.remove('active'));
-  event.target.classList.add('active');
-  document.getElementById('panel-' + tab).classList.add('active');
+window.toggleWday = day => {
+  const cb = $(`wch-${day}`);
+  $(`wday-${day}`).classList.toggle("completed", cb.checked);
+};
+
+// ─── PREVIEW ───────────────────────────────────────────────────
+function calcManual() {
+  const walkSteps = (parseFloat($("walkMins").value) || 0) * WALK_SPM;
+  const workoutSteps = WORKOUT_DAYS.reduce((sum, wd) => {
+    const cb = $(`wch-${wd.day}`);
+    return sum + (cb && cb.checked ? wd.mins * wd.spm : 0);
+  }, 0);
+  return Math.round(walkSteps + workoutSteps);
 }
 
-// ===== ADD STEPS =====
-function addStepsBracelet() {
-  const val = parseInt(document.getElementById('braceletSteps').value);
-  if (!val || val < 1) { showToast('Введи количество шагов 👟'); return; }
-  if (val > 80000) { showToast('Кажется, многовато 😅 Проверь цифру'); return; }
-  state.mySteps += val;
-  state.totalSteps += val;
-  document.getElementById('braceletSteps').value = '';
-  updateUI();
-  renderRoute();
-  renderLeaderboard();
-  showToast(`+${formatNum(val)} шагов засчитано! 🎉`);
+window.updateManualPreview = () => {
+  const total = calcManual();
+  const p = $("manualPreview");
+  if (total > 0) { p.textContent = `🧮 Итого: ~${fmt(total)} шагов`; p.classList.add("show"); }
+  else p.classList.remove("show");
+};
+
+window.updateBraceletPreview = () => {
+  const val = parseInt($("braceletSteps").value) || 0;
+  const p = $("braceletPreview");
+  if (val > 0) { p.textContent = `👟 Будет засчитано: ${fmt(val)} шагов`; p.classList.add("show"); }
+  else p.classList.remove("show");
+};
+
+// ─── SAVE STEPS ────────────────────────────────────────────────
+async function saveSteps(steps, btnId) {
+  if (steps <= 0)      { toast("Нет шагов для сохранения", true); return false; }
+  if (steps > 100000)  { toast("Слишком большое число 😅 Проверь", true); return false; }
+  const btn = $(btnId);
+  if (btn) btn.disabled = true;
+  try {
+    const userRef = doc(db, "pokhod_users", currentUser.id);
+    const metaRef = doc(db, "pokhod_meta", "totals");
+    await updateDoc(userRef, { totalSteps: increment(steps), lastUpdated: serverTimestamp() });
+    const ms = await getDoc(metaRef);
+    if (ms.exists()) await updateDoc(metaRef, { totalSteps: increment(steps) });
+    else             await setDoc(metaRef, { totalSteps: steps });
+    toast(`+${fmt(steps)} шагов засчитано! 🎉`);
+    return true;
+  } catch (e) {
+    console.error(e);
+    toast("Ошибка сохранения. Попробуй ещё раз", true);
+    return false;
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
-function addStepsManual() {
-  const workoutKey = document.getElementById('workoutType').value;
-  const walkMins = parseInt(document.getElementById('walkMinutes').value) || 0;
-  const w = WORKOUT_COEFF[workoutKey];
-  const workoutSteps = w.mins * w.spm;
-  const walkSteps = walkMins * 100;
-  const total = workoutSteps + walkSteps;
-  if (total === 0) { showToast('Добавь хотя бы одну активность 🏃'); return; }
-  state.mySteps += total;
-  state.totalSteps += total;
-  document.getElementById('walkMinutes').value = '';
-  updateUI();
-  renderRoute();
-  renderLeaderboard();
-  showToast(`+${formatNum(total)} шагов засчитано! 💪`);
+window.addStepsBracelet = async () => {
+  const steps = parseInt($("braceletSteps").value) || 0;
+  if (await saveSteps(steps, "btnBracelet")) {
+    $("braceletSteps").value = "";
+    $("braceletPreview").classList.remove("show");
+  }
+};
+
+window.addStepsManual = async () => {
+  const steps = calcManual();
+  if (await saveSteps(steps, "btnManual")) {
+    $("walkMins").value = "";
+    WORKOUT_DAYS.forEach(wd => {
+      const cb = $(`wch-${wd.day}`);
+      if (cb) { cb.checked = false; $(`wday-${wd.day}`).classList.remove("completed"); }
+    });
+    $("manualPreview").classList.remove("show");
+  }
+};
+
+// ─── TABS ──────────────────────────────────────────────────────
+window.switchTab = (tab, el) => {
+  currentTab = tab;
+  document.querySelectorAll(".input-tab").forEach(t => t.classList.remove("active"));
+  document.querySelectorAll(".input-panel").forEach(p => p.classList.remove("active"));
+  el.classList.add("active");
+  $("panel-" + tab).classList.add("active");
+};
+
+// ─── ADMIN ─────────────────────────────────────────────────────
+window.toggleAdmin = () => {
+  const open = $("adminPanel").classList.toggle("open");
+  $("adminToggle").classList.toggle("open", open);
+};
+
+function renderAdminPanel() {
+  const c = $("adminContent");
+  if (!adminOK) {
+    c.innerHTML = `
+      <div class="admin-title">🔒 Вход для администратора</div>
+      <div class="field-wrap">
+        <label class="admin-field-label">Пароль</label>
+        <input class="admin-field" type="password" id="adminPass" placeholder="Пароль"
+          onkeydown="if(event.key==='Enter')checkAdmin()">
+      </div>
+      <button class="btn-admin" style="width:100%;margin-top:4px" onclick="checkAdmin()">Войти</button>`;
+  } else {
+    c.innerHTML = `
+      <div class="admin-title">⚙️ Управление счётчиком команды</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:12px;">
+        Сейчас: <strong style="color:var(--orange-light)">${fmt(teamTotal)}</strong> шагов
+      </div>
+      <div class="admin-row">
+        <div class="field-wrap">
+          <label class="admin-field-label">Добавить шаги команде</label>
+          <input class="admin-field" type="number" id="adminAdd" placeholder="0" inputmode="numeric">
+        </div>
+        <button class="btn-admin" onclick="adminAdd()">Добавить</button>
+      </div>
+      <div class="admin-row">
+        <div class="field-wrap">
+          <label class="admin-field-label">Установить счётчик (перезапись)</label>
+          <input class="admin-field" type="number" id="adminSet" placeholder="0" inputmode="numeric">
+        </div>
+        <button class="btn-admin" onclick="adminSet()">Задать</button>
+      </div>`;
+  }
 }
 
-// ===== TOAST =====
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
+window.checkAdmin = () => {
+  const v = $("adminPass") && $("adminPass").value;
+  if (v === ADMIN_PASSWORD) { adminOK = true; renderAdminPanel(); toast("Добро пожаловать, администратор! ⚙️"); }
+  else toast("Неверный пароль", true);
+};
 
+window.adminAdd = async () => {
+  const n = parseInt($("adminAdd").value) || 0;
+  if (n <= 0) { toast("Введи количество шагов", true); return; }
+  try {
+    const ref = doc(db, "pokhod_meta", "totals");
+    const s = await getDoc(ref);
+    if (s.exists()) await updateDoc(ref, { totalSteps: increment(n) });
+    else            await setDoc(ref, { totalSteps: n });
+    $("adminAdd").value = "";
+    toast(`+${fmt(n)} шагов добавлено команде ✅`);
+    renderAdminPanel();
+  } catch (e) { toast("Ошибка: " + e.message, true); }
+};
+
+window.adminSet = async () => {
+  const n = parseInt($("adminSet").value);
+  if (isNaN(n) || n < 0) { toast("Введи корректное число", true); return; }
+  if (!confirm(`Установить счётчик команды = ${fmt(n)}?\nТекущее значение будет перезаписано.`)) return;
+  try {
+    await setDoc(doc(db, "pokhod_meta", "totals"), { totalSteps: n });
+    $("adminSet").value = "";
+    toast(`Счётчик установлен: ${fmt(n)} ✅`);
+    renderAdminPanel();
+  } catch (e) { toast("Ошибка: " + e.message, true); }
+};
+
+// ─── START ─────────────────────────────────────────────────────
 init();
 </script>
 </body>
