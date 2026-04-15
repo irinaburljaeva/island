@@ -143,13 +143,6 @@ body {
   background:linear-gradient(90deg,var(--green-light),var(--orange));
   transition:width 1.5s cubic-bezier(0.16,1,0.3,1); position:relative;
 }
-.progress-fill::after {
-  content:'🥾'; position:absolute; right:-14px; top:50%;
-  transform:translateY(-50%); font-size:20px;
-  filter:drop-shadow(0 2px 4px rgba(0,0,0,0.4));
-  animation:bootBounce 1s ease-in-out infinite alternate;
-}
-@keyframes bootBounce { to { transform:translateY(-65%); } }
 .progress-pct { font-family:'Unbounded',sans-serif; font-size:13px; font-weight:700; color:var(--orange-light); margin-top:8px; }
 .remaining-badge {
   display:inline-flex; align-items:center; gap:6px;
@@ -225,34 +218,99 @@ body {
 .map-footer-fill { height:100%; border-radius:5px; background:linear-gradient(90deg,var(--green-light),var(--orange)); width:0%; transition:width 1.5s cubic-bezier(0.16,1,0.3,1); }
 .map-footer-sub { font-size:10px; color:rgba(255,255,255,0.3); margin-top:5px; text-align:center; }
 
-/* ── ТЕКСТОВЫЙ МАРШРУТ ── */
-.route-list { display:flex; flex-direction:column; margin-top:12px; }
-.waypoint { display:flex; align-items:flex-start; gap:12px; position:relative; }
-.waypoint:not(:last-child)::before {
-  content:''; position:absolute; left:18px; top:40px; bottom:0;
-  width:3px; background:linear-gradient(to bottom,var(--green-light),rgba(82,183,136,0.15)); z-index:0;
+/* ── ГОРИЗОНТАЛЬНАЯ ЛЕНТА МАРШРУТА ── */
+.route-scroll {
+  overflow-x:auto; margin-top:12px;
+  padding-bottom:4px;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
 }
-.waypoint.done:not(:last-child)::before { background:linear-gradient(to bottom,var(--orange-light),var(--green-light)); }
-.wp-icon {
-  width:38px; height:38px; border-radius:50%; display:flex; align-items:center; justify-content:center;
-  font-size:17px; flex-shrink:0; position:relative; z-index:1; border:3px solid transparent;
+.route-scroll::-webkit-scrollbar { display:none; }
+
+.route-strip {
+  display:flex; align-items:stretch;
+  gap:0; width:max-content; padding:2px 2px 2px 2px;
 }
-.waypoint.done    .wp-icon { background:linear-gradient(135deg,var(--orange),var(--orange-light)); border-color:rgba(255,255,255,0.3); }
-.waypoint.current .wp-icon { background:linear-gradient(135deg,var(--green-light),var(--green-mid)); border-color:var(--orange-light); animation:pulseWp 2s ease-in-out infinite; }
-.waypoint.locked  .wp-icon { background:rgba(255,255,255,0.08); border-color:rgba(255,255,255,0.1); opacity:0.5; }
-@keyframes pulseWp { 0%,100%{box-shadow:0 0 0 4px rgba(244,115,42,0.3)} 50%{box-shadow:0 0 0 8px rgba(244,115,42,0.1)} }
-.wp-info { padding:6px 0 18px; }
-.wp-name { font-weight:800; font-size:14px; }
-.waypoint.locked .wp-name { color:rgba(255,255,255,0.3); }
-.wp-steps { font-size:12px; color:var(--green-light); margin-top:2px; font-weight:600; }
-.waypoint.done   .wp-steps { color:var(--orange-light); }
-.waypoint.locked .wp-steps { color:rgba(255,255,255,0.2); }
-.wp-badge {
-  display:inline-block; background:rgba(244,115,42,0.2); color:var(--orange-light);
-  font-size:10px; font-weight:800; padding:2px 8px; border-radius:10px; margin-top:4px;
-  border:1px solid rgba(244,115,42,0.3); text-transform:uppercase; letter-spacing:0.5px;
+
+.strip-card {
+  width:120px; border-radius:16px; overflow:hidden;
+  border:2px solid transparent; flex-shrink:0;
+  transition:transform 0.2s;
+  background:#1e3828;
 }
-.wp-badge.done-badge { background:rgba(82,183,136,0.2); color:var(--green-light); border-color:rgba(82,183,136,0.3); }
+.strip-card.done    { border-color:rgba(244,115,42,0.5); }
+.strip-card.current {
+  border-color:var(--orange-light);
+  transform:scale(1.05);
+  box-shadow:0 0 0 3px rgba(244,115,42,0.2), 0 6px 20px rgba(0,0,0,0.4);
+  z-index:2; position:relative;
+}
+.strip-card.locked  { opacity:0.45; }
+
+.strip-scene {
+  height:72px; position:relative;
+  display:flex; align-items:flex-end; padding:6px;
+  overflow:hidden;
+}
+.strip-scene::after {
+  position:absolute; bottom:6px; right:8px; font-size:22px; line-height:1;
+}
+/* Пейзажи */
+.sc-camp   { background:linear-gradient(160deg,#1a6030,#4da870); }
+.sc-camp::after   { content:'🏕️'; }
+.sc-forest { background:linear-gradient(160deg,#0d3d18,#2d7a38); }
+.sc-forest::after { content:'🌲'; }
+.sc-pass   { background:linear-gradient(160deg,#252e3e,#5a6e8a); }
+.sc-pass::after   { content:'⛰️'; }
+.sc-rock   { background:linear-gradient(160deg,#3e2810,#8a6040); }
+.sc-rock::after   { content:'🦅'; }
+.sc-falls  { background:linear-gradient(160deg,#152840,#3878a0); }
+.sc-falls::after  { content:'🏞️'; }
+.sc-meadow { background:linear-gradient(160deg,#2e4810,#78a828); }
+.sc-meadow::after { content:'🌸'; }
+.sc-top    { background:linear-gradient(160deg,#3a2060,#9060d0); }
+.sc-top::after    { content:'🏆'; }
+
+.strip-scene-overlay {
+  position:absolute; inset:0;
+  background:linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%);
+}
+.strip-badge {
+  position:relative; z-index:1;
+  font-size:9px; font-weight:800; padding:2px 6px;
+  border-radius:8px; line-height:1.4;
+}
+.strip-card.done    .strip-badge { background:var(--orange); color:white; }
+.strip-card.current .strip-badge { background:rgba(255,255,255,0.2); color:white; border:1px solid rgba(255,255,255,0.4); animation:pulse-badge 2s infinite; }
+@keyframes pulse-badge { 0%,100%{opacity:0.8} 50%{opacity:1} }
+
+.strip-info { padding:8px 9px 10px; }
+.strip-name {
+  font-family:'Unbounded',sans-serif; font-size:9px; font-weight:700;
+  color:var(--white); line-height:1.3; margin-bottom:4px;
+}
+.strip-card.locked .strip-name { color:rgba(255,255,255,0.4); }
+.strip-steps { font-size:10px; font-weight:700; color:var(--green-light); line-height:1.3; }
+.strip-card.done    .strip-steps { color:var(--orange-light); }
+.strip-card.current .strip-steps { color:white; }
+.strip-card.locked  .strip-steps { color:rgba(255,255,255,0.25); }
+
+/* Соединитель между карточками */
+.strip-conn {
+  width:16px; flex-shrink:0; align-self:center;
+  height:2px; position:relative;
+}
+.strip-conn::before {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:2px;
+  background:repeating-linear-gradient(90deg,
+    rgba(82,183,136,0.5) 0px, rgba(82,183,136,0.5) 4px,
+    transparent 4px, transparent 8px);
+}
+.strip-conn.done::before {
+  background:linear-gradient(90deg,var(--orange-light),var(--green-light));
+  border-radius:2px;
+}
 
 /* ── ADD STEPS ── */
 .steps-card { background:var(--cream); border-radius:20px; padding:20px; color:var(--text); margin:16px 20px 0; }
@@ -320,7 +378,7 @@ body {
 
 /* ── LEADERBOARD ── */
 .leaderboard-card { background:linear-gradient(135deg,#1e5038,#163d2a); border-radius:20px; padding:16px; border:1px solid rgba(82,183,136,0.2); margin:16px 20px 0; }
-.leaderboard-card .card-title { font-family:'Unbounded',sans-serif; font-size:13px; font-weight:700; margin-bottom:12px; }
+.leaderboard-card .card-title { font-family:'Unbounded',sans-serif; font-size:13px; font-weight:700; margin-bottom:12px; color:var(--white); }
 .leader-row { display:flex; align-items:center; gap:10px; padding:7px 8px; border-radius:12px; margin-bottom:3px; }
 .leader-row.me { background:rgba(244,115,42,0.15); border:1px solid rgba(244,115,42,0.3); }
 .leader-pos { font-family:'Unbounded',sans-serif; font-size:12px; font-weight:700; width:26px; text-align:center; color:rgba(255,255,255,0.4); }
@@ -420,7 +478,7 @@ body {
         <div class="map-footer-track"><div class="map-footer-fill" id="mapFooterFill"></div></div>
       </div>
     </div>
-    <div class="route-list" id="routeList"></div>
+    <div class="route-scroll"><div class="route-strip" id="routeStrip"></div></div>
   </div>
 
   <div class="steps-card">
@@ -686,13 +744,10 @@ function subscribeData() {
 
 // ── HERO ────────────────────────────────────────────────────────
 function updateHero() {
-  var pct = Math.min(100, (teamTotal/GOAL)*100);
   var rem = Math.max(0, GOAL-teamTotal);
   var my  = myData.totalSteps || 0;
   $("totalDisplay").textContent     = fmt(teamTotal);
   $("remainingDisplay").textContent = fmt(rem);
-  $("progressFill").style.width     = pct + "%";
-  $("progressPct").textContent      = pct.toFixed(1) + "%";
   $("myStepsDisplay").textContent   = fmt(my);
   $("myPctDisplay").textContent     = my > 0 ? ((my/GOAL)*100).toFixed(2)+"%" : "0%";
 }
@@ -782,6 +837,17 @@ function renderLeaderboard() {
   var top = allUsers.slice(0,10);
   var myRk = allUsers.findIndex(function(u){ return u.id===currentUser.id; }) + 1;
   $("myRankDisplay").textContent = myRk ? myRk+" место" : "—";
+
+  // Пустое состояние
+  if(top.length === 0) {
+    c.innerHTML = "<div style='text-align:center;padding:16px 0 8px;'>"
+      +"<div style='font-size:28px;margin-bottom:8px;'>🏕️</div>"
+      +"<div style='font-size:13px;font-weight:700;color:rgba(255,255,255,0.5);'>Пока никого нет</div>"
+      +"<div style='font-size:12px;color:rgba(255,255,255,0.3);margin-top:4px;'>Будь первой — добавь шаги!</div>"
+      +"</div>";
+    return;
+  }
+
   var medals = ["🥇","🥈","🥉"];
   top.forEach(function(u,i){
     var isMe = u.id===currentUser.id;
