@@ -422,7 +422,6 @@ body {
           <span class="rgt" id="mapPctLabel">0%</span>
         </div>
         <div class="map-footer-track"><div class="map-footer-fill" id="mapFooterFill"></div></div>
-        <div class="map-footer-sub" id="mapFooterSub">Загрузка данных...</div>
       </div>
     </div>
     <div class="route-list" id="routeList"></div>
@@ -511,13 +510,13 @@ const WALK_SPM = 100;
 
 // Координаты точек на карте в %
 const WAYPOINTS = [
-  { emoji:"🏕️", name:"Старт: Лагерь у реки",  from:0,      to:150000,  x:18, y:78 },
-  { emoji:"🌲", name:"Сосновый лес",            from:150000, to:300000,  x:28, y:38 },
-  { emoji:"⛰️", name:"Горный перевал",          from:300000, to:500000,  x:42, y:28 },
-  { emoji:"🦅", name:"Орлиная скала",           from:500000, to:650000,  x:58, y:42 },
+  { emoji:"🏕️", name:"Старт: Лагерь у реки",  from:0,      to:150000,  x:21, y:72 },
+  { emoji:"🌲", name:"Сосновый лес",            from:150000, to:300000,  x:30, y:33 },
+  { emoji:"⛰️", name:"Горный перевал",          from:300000, to:500000,  x:48, y:28 },
+  { emoji:"🦅", name:"Орлиная скала",           from:500000, to:650000,  x:62, y:37 },
   { emoji:"🏞️", name:"Долина водопадов",        from:650000, to:800000,  x:62, y:62 },
-  { emoji:"🌸", name:"Альпийский луг",          from:800000, to:950000,  x:78, y:72 },
-  { emoji:"🎉", name:"Вершина! Финал",          from:950000, to:1000000, x:92, y:12 },
+  { emoji:"🌸", name:"Альпийский луг",          from:800000, to:950000,  x:78, y:55 },
+  { emoji:"🎉", name:"Вершина! Финал",          from:950000, to:1000000, x:89, y:15 },
 ];
 
 // ── STATE ───────────────────────────────────────────────────────
@@ -756,7 +755,6 @@ function renderMap() {
   var pct = Math.min(100, (teamTotal/GOAL)*100);
   $("mapFooterFill").style.width = pct + "%";
   $("mapPctLabel").textContent   = pct.toFixed(1) + "%";
-  $("mapFooterSub").textContent  = fmt(teamTotal)+" из "+fmt(GOAL)+" шагов · осталось "+fmt(Math.max(0,GOAL-teamTotal));
 }
 
 // ── ТЕКСТОВЫЙ МАРШРУТ ───────────────────────────────────────────
